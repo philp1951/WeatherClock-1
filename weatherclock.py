@@ -183,7 +183,7 @@ while True :
         ind3txt = indfont.render(retrievemon,True,calcolour)
         ind4txt = indfont.render(retrieveyr,True,calcolour)
 
-    if int(retrievesec) > 44 and int(retrievesec) < 59:
+    if int(retrievesec) > 44:
         ind1txt = indfont.render(retrieveday,True,calcolour)
         ind2txt = indfont.render(retrievedate,True,calcolour)
         ind3txt = indfont.render(retrievemon,True,calcolour)
