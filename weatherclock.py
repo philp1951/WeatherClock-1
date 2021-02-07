@@ -60,12 +60,17 @@ txtposind2 = ind2txt.get_rect(centerx=xtxtpos,centery=ycenter*0.8)
 txtposind3 = ind3txt.get_rect(centerx=xtxtpos,centery=ycenter*1.2)
 txtposind4 = ind4txt.get_rect(centerx=xtxtpos,centery=ycenter*1.6)
 
-# Weather URL information used to get data from CumulusMX system
-# requires IP address of CumulusMX system and list of items (webtags) to retrieve
-# SEE CUMULUS Wiki for full list of webtags available  edit next two lines
-# to reflect your system
+# Information used to get data from CumulusMX system.
+# set weather = 1 to enable CumulusMX support, -1 to disable
 
-weatherIP = "192.168.1.17:8998"
+wdisp = int(-1)
+
+# this is the IP address of tthe CumulusMX system.
+
+weatherIP = "192.168.1.123:8998"
+
+# Series of webtags to retrieve from CumulusMX - do NOT alter - if you do you are on your own!
+
 weathertags = "temp&rfall&wlatest&currentwdir&press&tempunitnodeg&rainunit&pressunit&windunit"
 
 # Form the full URL
@@ -88,23 +93,23 @@ def paraeqshx(shx):
 def paraeqshy(shy):
     return ycenter-(int(hradius*(math.sin(math.radians((shy)+90)))))
 
-#x = requests.get("http://192.168.1.17:8998/api/tags/process.json?temp&rfall&wlatest&currentwdir&press")
-
-x = requests.get(weatherURL)
-if x.status_code == 200:
+if wdisp > 0:
+    x = requests.get(weatherURL)
+    if x.status_code == 200:
             # process JSON data if valid
-    weather = x.json()
-    wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-    wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
-    wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
-    wpress = "P "+weather["press"] + " " + weather["pressunit"]
-else:
-    wwind = " "
-    wtemp = "NO WEATHER!"
-    wrain = " "
-    wpress = " "
+            weather = x.json()
+            wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
+            wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
+            wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
+            wpress = "P "+weather["press"] + " " + weather["pressunit"]
+    else:
+            wwind = " "
+            wtemp = "NO WEATHER!"
+            wrain = " "
+            wpress = " "
 
-# Main loop:  Keyboard "q" and "t" togther quits program
+# Main loop:  Keyboard "z" and "x" togther will exit the program
+
 while True :
     pygame.display.update()
 
@@ -151,13 +156,11 @@ while True :
     ind4txt = indfont.render(retrieveyr,True,calcolour)
 
 #Update weather info every 30 seconds
-    if int(retrievesec) == 30 or int(retrievesec) == 0:
+    if int(retrievesec) == 30 or int(retrievesec) == 0 and wdisp > 0:
         x = requests.get(weatherURL)
-        #x = requests.get("http://192.168.1.17:8998/api/tags/process.json?temp&rfall&wlatest&currentwdir&press")
         if x.status_code == 200:
-            # process JSON data if valid response
+            # process JSON data if valid
             weather = x.json()
-            # Format display text
             wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
             wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
             wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
@@ -172,22 +175,22 @@ while True :
     #  Can be date or weather etc
     # Default is weather
 
-    ind1txt = weafont.render(wtemp,True,weacolour)
-    ind2txt = weafont.render(wpress,True,weacolour)
-    ind3txt = weafont.render(wwind,True,weacolour)
-    ind4txt = weafont.render(wrain,True,weacolour)
+    ind1txt = indfont.render(retrieveday,True,calcolour)
+    ind2txt = indfont.render(retrievedate,True,calcolour)
+    ind3txt = indfont.render(retrievemon,True,calcolour)
+    ind4txt = indfont.render(retrieveyr,True,calcolour)
 
-    if int(retrievesec) > 14  and int(retrievesec) < 30:
-        ind1txt = indfont.render(retrieveday,True,calcolour)
-        ind2txt = indfont.render(retrievedate,True,calcolour)
-        ind3txt = indfont.render(retrievemon,True,calcolour)
-        ind4txt = indfont.render(retrieveyr,True,calcolour)
+    if int(retrievesec) > 14  and int(retrievesec) < 30 and wdisp > 0 :
+        ind1txt = weafont.render(wtemp,True,weacolour)
+        ind2txt = weafont.render(wpress,True,weacolour)
+        ind3txt = weafont.render(wwind,True,weacolour)
+        ind4txt = weafont.render(wrain,True,weacolour)
 
-    if int(retrievesec) > 44:
-        ind1txt = indfont.render(retrieveday,True,calcolour)
-        ind2txt = indfont.render(retrievedate,True,calcolour)
-        ind3txt = indfont.render(retrievemon,True,calcolour)
-        ind4txt = indfont.render(retrieveyr,True,calcolour)
+    if int(retrievesec) > 44 and wdisp > 0:
+        ind1txt = weafont.render(wtemp,True,weacolour)
+        ind2txt = weafont.render(wpress,True,weacolour)
+        ind3txt = weafont.render(wwind,True,weacolour)
+        ind4txt = weafont.render(wrain,True,weacolour)
 
     # Align it
     txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
@@ -208,7 +211,7 @@ while True :
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        # Pressing q+t to exit
+        # Pressing zq to exit
         if event.type == KEYDOWN:
             if event.key == K_z and K_q:
                 pygame.quit()
