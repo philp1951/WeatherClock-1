@@ -3,12 +3,34 @@ import pygame , sys , math, time, os, requests, json
 from pygame.locals import *
 
 # set to point display to the attached TFT Touch Screen if fitted
-os.environ['SDL_VIDEODRIVER']="fbcon"
+os.environ['SDL_VIDEODRIVER']="directfb"
 
 pygame.init()
 bg = pygame.display.set_mode()
 
 pygame.mouse.set_visible(False)
+
+# CUSTOM SETTINGS START HERE
+# Information used to get data from CumulusMX system.
+# set wdisp = 1 to enable CumulusMX support, -1 to disable
+# set cmx = 1 to enable weather display switching, -1 to disable
+# Default is no weather display
+
+wdisp = int(-1)
+cmx = int(-1)
+
+# this is the IP address of the CumulusMX system.
+
+weatherIP = "192.168.1.1:8998"
+
+
+# Series of webtags to retrieve from CumulusMX
+# If your station does NOT have a UV sensor remove the &UV from the end of the next variable
+# and comment out lines with the variable "wuv" in them - a total of 4 lines.
+
+weathertags = "temp&rfall&wlatest&currentwdir&press&tempunitnodeg&rainunit&pressunit&windunit&sunrise&sunset&UV"
+
+# CUSTOM SETTINGS END HERE
 
 # Change colour to preference (R,G,B) 255 max value
 bgcolour       = (0,   0,   0  )
@@ -25,55 +47,24 @@ dotsize        = int(bg.get_height()/90)
 hradius        = bg.get_height()/2.5
 secradius      = hradius - (bg.get_height()/26)
 indtxtsize     = int(bg.get_height()/5)
-weatxtsize     = int(bg.get_height()/10)
-indboxy        = int(bg.get_height()/6)
-indboxx        = int(bg.get_width()/2.5)
+weatxtsize     = int(bg.get_height()/8)
 
 # Coords of items on display
 xclockpos      = int(bg.get_width()*0.2875)
-ycenter        = int(bg.get_height()/2)
-xtxtpos        = int(bg.get_width()*0.75)
-xindboxpos     = int(xtxtpos-(indboxx/2))
-ind1y          = int((ycenter*0.4)-(indboxy/2))
-ind2y          = int((ycenter*0.8)-(indboxy/2))
-ind3y          = int((ycenter*1.2)-(indboxy/2))
-ind4y          = int((ycenter*1.6)-(indboxy/2))
-txthmy         = int(ycenter-digiclockspace)
-txtsecy        = int(ycenter+digiclockspace)
+xcentre        = int(bg.get_width()/2)
+ycentre        = int(bg.get_height()/2)
+yheight        = int(bg.get_height())
+xtxtpos        = int(bg.get_width()*0.55)
+txthmy         = int(ycentre-digiclockspace)
+txtsecy        = int(ycentre+digiclockspace)
 
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
 indfont       = pygame.font.Font(None,indtxtsize)
 weafont       = pygame.font.Font(None,weatxtsize)
 
-# Indicator text - used to display daat on RHS of display
 
-ind1txt       = indfont.render("MMMM",True,bgcolour)
-ind2txt       = indfont.render("MMMM",True,bgcolour)
-ind3txt       = indfont.render("MMMM",True,bgcolour)
-ind4txt       = indfont.render("MMMM",True,bgcolour)
-wwind         = "N"
-
-# Indicator positions
-txtposind1 = ind1txt.get_rect(centerx=xtxtpos,centery=ycenter*0.4)
-txtposind2 = ind2txt.get_rect(centerx=xtxtpos,centery=ycenter*0.8)
-txtposind3 = ind3txt.get_rect(centerx=xtxtpos,centery=ycenter*1.2)
-txtposind4 = ind4txt.get_rect(centerx=xtxtpos,centery=ycenter*1.6)
-
-# Information used to get data from CumulusMX system.
-# set weather = 1 to enable CumulusMX support, -1 to disable
-
-wdisp = int(-1)
-
-# this is the IP address of tthe CumulusMX system.
-
-weatherIP = "192.168.1.123:8998"
-
-# Series of webtags to retrieve from CumulusMX - do NOT alter - if you do you are on your own!
-
-weathertags = "temp&rfall&wlatest&currentwdir&press&tempunitnodeg&rainunit&pressunit&windunit"
-
-# Form the full URL
+# Form the full CumulusMX request URL
 
 weatherURL = "http://"+weatherIP+"/api/tags/process.json?"+weathertags
 
@@ -84,14 +75,14 @@ def paraeqsmx(smx):
     return xclockpos-(int(secradius*(math.cos(math.radians((smx)+90)))))
 
 def paraeqsmy(smy):
-    return ycenter-(int(secradius*(math.sin(math.radians((smy)+90)))))
+    return ycentre-(int(secradius*(math.sin(math.radians((smy)+90)))))
 
 # Equations for hour markers
 def paraeqshx(shx):
     return xclockpos-(int(hradius*(math.cos(math.radians((shx)+90)))))
 
 def paraeqshy(shy):
-    return ycenter-(int(hradius*(math.sin(math.radians((shy)+90)))))
+    return ycentre-(int(hradius*(math.sin(math.radians((shy)+90)))))
 
 if wdisp > 0:
     x = requests.get(weatherURL)
@@ -102,11 +93,17 @@ if wdisp > 0:
             wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
             wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
             wpress = "P "+weather["press"] + " " + weather["pressunit"]
+            wuv = "UV "+weather["UV"]
+            wsup = "Sunrise " + weather["sunrise"]
+            wsdown = "Sunset " + weather["sunset"]
     else:
             wwind = " "
             wtemp = "NO WEATHER!"
             wrain = " "
             wpress = " "
+            wuv = " "
+            wsup = " "
+            wdown = " "
 
 # Main loop:  Keyboard "z" and "x" togther will exit the program
 
@@ -150,10 +147,6 @@ while True :
 
     digiclockhm = clockfont.render(retrievehm,True,timecolour)
     digiclocksec = clockfont.render(retrievesec,True,timecolour)
-    ind1txt = indfont.render(retrieveday,True,calcolour)
-    ind2txt = indfont.render(retrievedate,True,calcolour)
-    ind3txt = indfont.render(retrievemon,True,calcolour)
-    ind4txt = indfont.render(retrieveyr,True,calcolour)
 
 #Update weather info every 30 seconds
     if int(retrievesec) == 30 or int(retrievesec) == 0 and wdisp > 0:
@@ -162,35 +155,50 @@ while True :
             # process JSON data if valid
             weather = x.json()
             wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
-            wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
-            wpress = "P "+weather["press"] + " " + weather["pressunit"]
+            wtemp = "T  "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
+            wrain = "R  "+weather["rfall"] + " " + weather["rainunit"]
+            wpress = "P  "+weather["press"] + " " + weather["pressunit"]
+            wuv = "UV  "+ weather["UV"]
+            wsup = "Sunrise " + weather["sunrise"]
+            wsdown = "Sunset  " + weather["sunset"]
         else:
             wwind = " "
             wtemp = "NO WEATHER!"
             wrain = " "
             wpress = " "
+            wuv = " "
+            wsup = " "
+            wdown = " "
 
     #  Set up data for right hand side of screen
-    #  Can be date or weather etc
-    # Default is weather
+    #  Can be date or weather
 
-    ind1txt = indfont.render(retrieveday,True,calcolour)
-    ind2txt = indfont.render(retrievedate,True,calcolour)
-    ind3txt = indfont.render(retrievemon,True,calcolour)
-    ind4txt = indfont.render(retrieveyr,True,calcolour)
+    if wdisp < 0:
+        ind1txt = indfont.render(retrieveday,True,calcolour)
+        ind2txt = indfont.render(retrievedate,True,calcolour)
+        ind3txt = indfont.render(retrievemon,True,calcolour)
+        ind4txt = indfont.render(retrieveyr,True,calcolour)
+        ind5txt = indfont.render(" ",True,calcolour)
+        txt1pos = (xtxtpos,int(yheight*0.05))
+        txt2pos = (xtxtpos,int(yheight*0.3))
+        txt3pos = (xtxtpos,int(yheight*0.55))
+        txt4pos = (xtxtpos,int(yheight*0.8))
 
-    if int(retrievesec) > 14  and int(retrievesec) < 30 and wdisp > 0 :
+    if wdisp > 0:
         ind1txt = weafont.render(wtemp,True,weacolour)
         ind2txt = weafont.render(wpress,True,weacolour)
         ind3txt = weafont.render(wwind,True,weacolour)
         ind4txt = weafont.render(wrain,True,weacolour)
-
-    if int(retrievesec) > 44 and wdisp > 0:
-        ind1txt = weafont.render(wtemp,True,weacolour)
-        ind2txt = weafont.render(wpress,True,weacolour)
-        ind3txt = weafont.render(wwind,True,weacolour)
-        ind4txt = weafont.render(wrain,True,weacolour)
+        ind5txt = weafont.render(wuv,True,weacolour)
+        ind6txt = weafont.render(wsup,True,weacolour)
+        ind7txt = weafont.render(wsdown,True,weacolour)
+        txt1pos = (xtxtpos,int(yheight*0.01))
+        txt2pos = (xtxtpos,int(yheight*0.14))
+        txt3pos = (xtxtpos,int(yheight*0.28))
+        txt4pos = (xtxtpos,int(yheight*0.42))
+        txt5pos = (xtxtpos,int(yheight*0.56))
+        txt6pos = (xtxtpos,int(yheight*0.7))
+        txt7pos = (xtxtpos,int(yheight*0.84))
 
     # Align it
     txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
@@ -200,10 +208,14 @@ while True :
     # Render the text
     bg.blit(digiclockhm, txtposhm)
     bg.blit(digiclocksec, txtpossec)
-    bg.blit(ind1txt, txtposind1)
-    bg.blit(ind2txt, txtposind2)
-    bg.blit(ind3txt, txtposind3)
-    bg.blit(ind4txt, txtposind4)
+    bg.blit(ind1txt, txt1pos)
+    bg.blit(ind2txt, txt2pos)
+    bg.blit(ind3txt, txt3pos)
+    bg.blit(ind4txt, txt4pos)
+    if wdisp > 0:
+        bg.blit(ind5txt, txt5pos)
+        bg.blit(ind6txt, txt6pos)
+        bg.blit(ind7txt, txt7pos)
 
     time.sleep(0.04)
     pygame.time.Clock().tick(25)
@@ -211,8 +223,12 @@ while True :
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        # Pressing zq to exit
+        # Pressing z and q to exit
         if event.type == KEYDOWN:
             if event.key == K_z and K_q:
                 pygame.quit()
                 sys.exit()
+        if event.type == MOUSEBUTTONDOWN and cmx > 0:
+            # Flip RHS of screen to other option
+            if pygame.mouse.get_pos()[0] > xcentre: wdisp = int(1)
+            if pygame.mouse.get_pos()[0] <= xcentre: wdisp = int(-1)
