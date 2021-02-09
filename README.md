@@ -25,7 +25,11 @@ If you are unsure how to do this please see https://www.raspberrypi.org/software
 
 It is expected that the OS is already installed BUT note the following:
 
-Use raspi-config to -
+Use
+```
+sudo raspi-config
+```
+to -
 
 enable SSH support - for access to system from other machines - to change variables for example.
 boot into console with auto-login
@@ -35,15 +39,15 @@ Installation of weatherclock
 ----------------------------
 
 from the terminal issue the following commands:
-
- sudo apt update
- sudo apt upgrade
-
+```
+sudo apt update
+sudo apt upgrade
+```
 
 Change into the directory where you copied weatherclock e.g. ..
-
- cd weatherclock
-
+```
+cd weatherclock
+```
 By default the weather function is disabled. To enable this the following variables need to be set.
 Take a copy of weatherclock.py and save it somewhere safe!
 1 - The variable weatherIP needs to be set to your CumulusMX IP address. (A prototype address 192.168.1.1:8998 is set as a template)
@@ -52,9 +56,9 @@ Take a copy of weatherclock.py and save it somewhere safe!
 
 Running weatherclock
 --------------------
-
- python3 /home/pi/weatherclock/weatherclock.py  
-
+```
+python3 /home/pi/weatherclock/weatherclock.py  
+```
 will start the application.
 
 This MUST be run from the console on which it is to be displayed.
@@ -66,14 +70,12 @@ weatherclock comes up in non-weather mode by default
 There is a crude way to auto-start it at boot - the usual cron based methods don't work out of the box and I need to work out how to set the correct enviroment for running.
 
 The 'crude' way is to include the following lines at the end of the .bashrc file in the pi home directory.  It's a hidden file but should be there!
-
- # start weatherclock if not running already
- {
- if ! ps -ax | grep python3 | grep weatherclock.py; then
-   /usr/bin/python3 /home/pi/weatherclock/weatherclock.py
- fi
- } &> /dev/null
-
+```
+# start weatherclock if not already running
+{ if ! ps -ax | grep python3 | grep
+weatherclock.py; then /usr/bin/python3 /home/pi/weatherclock/weatherclock.py
+fi } &> /dev/null
+```
 This checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  
 
 Using Weatherclock
