@@ -73,9 +73,11 @@ There is a crude way to auto-start it at boot - the usual cron based methods don
 The 'crude' way is to include the following lines at the end of the .bashrc file in the pi home directory.  It's a hidden file but should be there!
 ```
 # start weatherclock if not already running
-{ if ! ps -ax | grep python3 | grep
-weatherclock.py; then /usr/bin/python3 /home/pi/weatherclock/weatherclock.py
-fi } &> /dev/null
+{
+if ! ps -ax | grep python3 | grep weatherclock.py; then
+  /usr/bin/python3 /home/pi/weatherclock/weatherclock.py
+fi
+} &> /dev/null
 ```
 This checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  
 
