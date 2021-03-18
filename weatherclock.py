@@ -17,7 +17,7 @@ pygame.mouse.set_visible(False)
 # Default is no weather display
 
 wdisp = int(-1)
-cmx = int(-1)
+cmx = int(1)
 
 # this is the IP address of the CumulusMX system.
 
@@ -41,8 +41,8 @@ weacolour      = (255, 255, 0)
 calcolour      = (255, 255, 0)
 
 # Scaling to the right size for the display
-digiclocksize  = int(bg.get_height()/3.5)
-digiclockspace = int(bg.get_height()/10.5)
+digiclocksize  = int(bg.get_height()/5)
+digiclockspace = int(bg.get_height()/12)
 dotsize        = int(bg.get_height()/90)
 hradius        = bg.get_height()/2.5
 secradius      = hradius - (bg.get_height()/26)
@@ -54,12 +54,15 @@ xclockpos      = int(bg.get_width()*0.2875)
 xcentre        = int(bg.get_width()/2)
 ycentre        = int(bg.get_height()/2)
 yheight        = int(bg.get_height())
-xtxtpos        = int(bg.get_width()*0.55)
+xtxtpos        = int(bg.get_width()*0.6)
 txthmy         = int(ycentre-digiclockspace)
 txtsecy        = int(ycentre+digiclockspace)
+txtday         = int(ycentre-(2.5*digiclockspace))
+txtmon         = int(ycentre+(2.5*digiclockspace))
 
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
+dayfont       = pygame.font.Font(None,int(digiclocksize/2))
 indfont       = pygame.font.Font(None,indtxtsize)
 weafont       = pygame.font.Font(None,weatxtsize)
 
@@ -89,14 +92,14 @@ if wdisp > 0:
     if x.status_code == 200:
             # process JSON data if valid
             weather = x.json()
-            wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "T "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
-            wrain = "R "+weather["rfall"] + " " + weather["rainunit"]
-            wpress = "P "+weather["press"] + " " + weather["pressunit"]
-            wuv = "UV "+weather["UV"]
+            wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
+            wtemp = "Temp  "+weather["temp"] +  " \xb0" + weather["tempunitnodeg"]
+            wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
+            wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
+            wuv = "UV  "+ weather["UV"]
             wsup = "Sunrise " + weather["sunrise"]
-            wsdown = "Sunset " + weather["sunset"]
-    else:
+            wsdown = "Sunset  " + weather["sunset"]
+    if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
             wrain = " "
@@ -144,9 +147,12 @@ while True :
     retrievemon = time.strftime("%b",time.localtime(time.time()))
     retrieveyr = time.strftime("%Y",time.localtime(time.time()))
     daydate = retrieveday + " " + retrievedate
+    yrmon = retrievemon + " " + retrieveyr
 
     digiclockhm = clockfont.render(retrievehm,True,timecolour)
     digiclocksec = clockfont.render(retrievesec,True,timecolour)
+    digiclockday = dayfont.render(daydate,True,clockcolour)
+    digiclockmon = dayfont.render(yrmon,True,clockcolour)
 
 #Update weather info every 30 seconds
     if int(retrievesec) == 30 or int(retrievesec) == 0 and wdisp > 0:
@@ -154,14 +160,14 @@ while True :
         if x.status_code == 200:
             # process JSON data if valid
             weather = x.json()
-            wwind = "W "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "T  "+weather["temp"] + " " + " \xb0" + weather["tempunitnodeg"]
-            wrain = "R  "+weather["rfall"] + " " + weather["rainunit"]
-            wpress = "P  "+weather["press"] + " " + weather["pressunit"]
+            wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
+            wtemp = "Temp  "+weather["temp"] +  " \xb0" + weather["tempunitnodeg"]
+            wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
+            wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
             wuv = "UV  "+ weather["UV"]
             wsup = "Sunrise " + weather["sunrise"]
             wsdown = "Sunset  " + weather["sunset"]
-        else:
+        if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
             wrain = " "
@@ -170,28 +176,16 @@ while True :
             wsup = " "
             wdown = " "
 
-    #  Set up data for right hand side of screen
-    #  Can be date or weather
-
-    if wdisp < 0:
-        ind1txt = indfont.render(retrieveday,True,calcolour)
-        ind2txt = indfont.render(retrievedate,True,calcolour)
-        ind3txt = indfont.render(retrievemon,True,calcolour)
-        ind4txt = indfont.render(retrieveyr,True,calcolour)
-        ind5txt = indfont.render(" ",True,calcolour)
-        txt1pos = (xtxtpos,int(yheight*0.05))
-        txt2pos = (xtxtpos,int(yheight*0.3))
-        txt3pos = (xtxtpos,int(yheight*0.55))
-        txt4pos = (xtxtpos,int(yheight*0.8))
+    # Set up data for right hand side of screen (weather)
 
     if wdisp > 0:
-        ind1txt = weafont.render(wtemp,True,weacolour)
-        ind2txt = weafont.render(wpress,True,weacolour)
-        ind3txt = weafont.render(wwind,True,weacolour)
-        ind4txt = weafont.render(wrain,True,weacolour)
-        ind5txt = weafont.render(wuv,True,weacolour)
-        ind6txt = weafont.render(wsup,True,weacolour)
-        ind7txt = weafont.render(wsdown,True,weacolour)
+        ind1txt = dayfont.render(wtemp,True,weacolour)
+        ind2txt = dayfont.render(wpress,True,weacolour)
+        ind3txt = dayfont.render(wwind,True,weacolour)
+        ind4txt = dayfont.render(wrain,True,weacolour)
+        ind5txt = dayfont.render(wuv,True,weacolour)
+        ind6txt = dayfont.render(wsup,True,weacolour)
+        ind7txt = dayfont.render(wsdown,True,weacolour)
         txt1pos = (xtxtpos,int(yheight*0.01))
         txt2pos = (xtxtpos,int(yheight*0.14))
         txt3pos = (xtxtpos,int(yheight*0.28))
@@ -203,11 +197,15 @@ while True :
     # Align it
     txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
     txtpossec     = digiclocksec.get_rect(centerx=xclockpos,centery=txtsecy)
+    txtposday     = digiclockday.get_rect(centerx=xclockpos,centery=txtday)
+    txtposmon     = digiclockmon.get_rect(centerx=xclockpos,centery=txtmon)
 
 
     # Render the text
     bg.blit(digiclockhm, txtposhm)
     bg.blit(digiclocksec, txtpossec)
+    bg.blit(digiclockday, txtposday)
+    bg.blit(digiclockmon, txtposmon)
     bg.blit(ind1txt, txt1pos)
     bg.blit(ind2txt, txt2pos)
     bg.blit(ind3txt, txt3pos)
@@ -228,7 +226,3 @@ while True :
             if event.key == K_z and K_q:
                 pygame.quit()
                 sys.exit()
-        if event.type == MOUSEBUTTONDOWN and cmx > 0:
-            # Flip RHS of screen to other option
-            if pygame.mouse.get_pos()[0] > xcentre: wdisp = int(1)
-            if pygame.mouse.get_pos()[0] <= xcentre: wdisp = int(-1)
