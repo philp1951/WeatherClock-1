@@ -13,24 +13,21 @@ pygame.mouse.set_visible(False)
 # CUSTOM SETTINGS START HERE
 # Information used to get data from CumulusMX system.
 # set wdisp = 1 to enable CumulusMX support, -1 to disable
-# set cmx = 1 to enable weather display switching, -1 to disable
 # Default is no weather display
 
-wdisp = int(-1)
-cmx = int(1)
+wdisp = int(1)
 
-# this is the IP address of the CumulusMX system.
-
-weatherIP = "192.168.1.1:8998"
-
+# this section is used to set the IP address of the system.
+# select both weathertags and weatherIP IF you are geting data directly
+# from you local CumulusMX system
+#NB YOU WILL NEED TO EDIT THE ADDRESS TO REFLECT YOUR SYSTEM
 
 # Series of webtags to retrieve from CumulusMX
 # If your station does NOT have a UV sensor remove the &UV from the end of the next variable
 # and comment out lines with the variable "wuv" in them - a total of 4 lines.
 
-weathertags = "temp&rfall&wlatest&currentwdir&press&tempunitnodeg&rainunit&pressunit&windunit&sunrise&sunset&UV"
-
-# CUSTOM SETTINGS END HERE
+weathertags = "temp&rfall&wlatest&currentwdir&press&tempunit&rainunit&pressunit&windunit&sunrise&sunset&UV"
+weatherIP = "http://192.168.1.17:8998/api/tags/process.json?"  # CHANGE address to point to your CumulusMX system
 
 # Change colour to preference (R,G,B) 255 max value
 bgcolour       = (0,   0,   0  )
@@ -39,6 +36,9 @@ seccolour      = (0, 255, 0)
 timecolour     = (255,0,255)
 weacolour      = (255, 255, 0)
 calcolour      = (255, 255, 0)
+
+# CUSTOM SETTINGS END HERE
+
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
@@ -69,7 +69,7 @@ weafont       = pygame.font.Font(None,weatxtsize)
 
 # Form the full CumulusMX request URL
 
-weatherURL = "http://"+weatherIP+"/api/tags/process.json?"+weathertags
+weatherURL = weatherIP+weathertags
 
 # Parametric Equations of a Circle to get the markers
 # 90 Degree offset to start at 0 seconds marker
@@ -87,13 +87,15 @@ def paraeqshx(shx):
 def paraeqshy(shy):
     return ycentre-(int(hradius*(math.sin(math.radians((shy)+90)))))
 
+# NOW get data
+
 if wdisp > 0:
-    x = requests.get(weatherURL)
+    x = requests.get(weatherURL, timeout=2)
     if x.status_code == 200:
             # process JSON data if valid
             weather = x.json()
             wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "Temp  "+weather["temp"] +  " \xb0" + weather["tempunitnodeg"]
+            wtemp = "Temp  "+weather["temp"] +  " \u00B0" + weather["tempunit"][6:]
             wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
             wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
             wuv = "UV  "+ weather["UV"]
@@ -102,7 +104,7 @@ if wdisp > 0:
     if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
-            wrain = " "
+            wrain = str(x.status_code)
             wpress = " "
             wuv = " "
             wsup = " "
@@ -156,12 +158,12 @@ while True :
 
 #Update weather info every 30 seconds
     if int(retrievesec) == 30 or int(retrievesec) == 0 and wdisp > 0:
-        x = requests.get(weatherURL)
+        x = requests.get(weatherURL, timeout = 2)
         if x.status_code == 200:
             # process JSON data if valid
             weather = x.json()
             wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "Temp  "+weather["temp"] +  " \xb0" + weather["tempunitnodeg"]
+            wtemp = "Temp  "+weather["temp"] + " \u00B0" + weather["tempunit"][6:]
             wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
             wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
             wuv = "UV  "+ weather["UV"]
@@ -170,7 +172,7 @@ while True :
         if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
-            wrain = " "
+            wrain = str(x.status_code)
             wpress = " "
             wuv = " "
             wsup = " "

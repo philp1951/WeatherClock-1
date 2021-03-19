@@ -50,12 +50,15 @@ Change into the directory where you copied weatherclock e.g. ..
 ```
 cd weatherclock
 ```
-By default the weather function is disabled. To enable this the following variables need to be set.
+By default the weather function is enabled.
 Take a copy of weatherclock.py and save it somewhere safe!
 ```
-1 - The variable weatherIP needs to be set to your CumulusMX IP address. (A prototype address 192.168.1.1:8998 is set as a template)
-2 - The variable wdisp needs to be set to  -1 [wdisp = int(-1)] to enable display of weather data.
+1 - The variable weatherIP needs to be set to your CumulusMX IP address. (A prototype address 192.168.1.17:8998 is set as a template)
+2 - The variable weathertags MAY need to be changed if you don't have a UV sensor.  Instructions are in the comments of the code.
+3 - The variable wdisp needs to be set to  -1 [wdisp = int(-1)] to enable display of weather data. This is set as default.
+Setting wdisp = 0 will just display the clock.
 ```
+
 Running weatherclock
 --------------------
 ```
@@ -67,9 +70,7 @@ This MUST be run from the console on which it is to be displayed.
 
 To exit weatherflow press keys Z and X at the same time.
 
-weatherclock comes up in non-weather mode by default
-
-There is a crude way to auto-start it at boot - the usual cron based methods don't work out of the box and I need to work out how to set the correct enviroment for running.
+There is a crude way to auto-start it at boot - the usual cron based methods don't work out of the box and I need to work out how to set the correct environment for running.
 
 The 'crude' way is to include the following lines at the end of the .bashrc file in the pi home directory.  It's a hidden file but should be there!
 ```
@@ -80,11 +81,11 @@ if ! ps -ax | grep python3 | grep weatherclock.py; then
 fi
 } &> /dev/null
 ```
-This checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  
+When you login using pi as te user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
 
 Using Weatherclock
 ------------------
-The LHS of the screen will display a "studio" style clock with a central display showing Day date and time.
+The LHS of the screen will display a "studio" style clock with a central display showing Day date and time with seconds being 'illuminated' dots.
 
 When it is configured for CumulusMX connection the RHS can display the following weather information: (Temp)erature, (Press)ure, (Wind) speed and direction, (Rain)fall, (UV)index together with Sunrise and Sunset times for the day.  
 
