@@ -81,7 +81,7 @@ if ! ps -ax | grep python3 | grep weatherclock.py; then
 fi
 } &> /dev/null
 ```
-When you login using pi as te user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
+When you login using pi as the user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
 
 Using Weatherclock
 ------------------
