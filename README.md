@@ -1,6 +1,6 @@
 weatherclock
 
-Version 1.1
+Version 1.2
 
 Weatherclock is a Raspberry Pi "Studio" style clock written in python3 using pygame with calendar and weather display on (16:9) monitors, displays and TVs.
 
@@ -55,8 +55,8 @@ Take a copy of weatherclock.py and save it somewhere safe!
 ```
 1 - The variable weatherIP needs to be set to your CumulusMX IP address. (A prototype address 192.168.1.17:8998 is set as a template)
 2 - The variable weathertags MAY need to be changed if you don't have a UV sensor.  Instructions are in the comments of the code.
-3 - The variable wdisp needs to be set to  -1 [wdisp = int(-1)] to enable display of weather data. This is set as default.
-Setting wdisp = 0 will just display the clock.
+3 - The variable wdisp needs to be set to  1 [wdisp = int(1)] to enable display of weather data. This is set as default.
+Setting wdisp = -1 will just display the clock.
 ```
 
 Running weatherclock
@@ -81,7 +81,7 @@ if ! ps -ax | grep python3 | grep weatherclock.py; then
 fi
 } &> /dev/null
 ```
-When you login using pi as the user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
+When you login using pi as te user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
 
 Using Weatherclock
 ------------------

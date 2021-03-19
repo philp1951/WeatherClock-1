@@ -24,7 +24,7 @@ wdisp = int(1)
 
 # Series of webtags to retrieve from CumulusMX
 # If your station does NOT have a UV sensor remove the &UV from the end of the next variable
-# and comment out lines with the variable "wuv" in them - a total of 4 lines.
+# and comment out lines with the variable "wuv" in them - a total of 5 lines.  Search for "wuv" and comment out the lines
 
 weathertags = "temp&rfall&wlatest&currentwdir&press&tempunit&rainunit&pressunit&windunit&sunrise&sunset&UV"
 weatherIP = "http://192.168.1.17:8998/api/tags/process.json?"  # CHANGE address to point to your CumulusMX system
