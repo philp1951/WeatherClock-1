@@ -3,16 +3,16 @@ import pygame , sys , math, time, os, requests, json, random
 from pygame.locals import *
 
 # set to point display to the attached TFT Touch Screen if fitted - uncoment to select this option
-# Need to uncomment to run on Raspberry Pi with touch screen, comment out for Windows running
+# Need to uncomment to run on Raspberry Pi with touch screen
 
-os.environ['SDL_VIDEODRIVER']="directfb"
+#os.environ['SDL_VIDEODRIVER']="directfb"
 
 pygame.init()
 
 # ONLY ONE OF THESE TWO LINES SHOULD BE UNCOMMENTED!!
 
-bg = pygame.display.set_mode()         # Uncomment this line for Raspberry Pi
-#bg = pygame.display.set_mode((720,480)) # Uncomment this line for Windows 10 - edit screen size if desired
+#bg = pygame.display.set_mode()         # Uncomment this line for Raspberry Pi
+bg = pygame.display.set_mode((720,480)) # Uncomment this line for Windows 10 - edit screen size if desired
 
 pygame.mouse.set_visible(False)
 
