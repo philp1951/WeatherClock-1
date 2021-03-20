@@ -1,6 +1,6 @@
 weatherclock
 
-Version 1.2
+Version 1.3
 
 Weatherclock is a Raspberry Pi "Studio" style clock written in python3 using pygame with calendar and weather display on (16:9) monitors, displays and TVs.
 
@@ -8,14 +8,19 @@ This was designed specifically for the Raspberry Pi and Raspberry Pi 7" touch sc
 
 The optional weather information is retrieved from a CumulusMX system running on the local area network.
 
+It may be run under Python 3 on other systems - it has been tested on Windows 10
+
+PLEASE edit the code and make the indicated changes in order to select your system - there are two lines towards the top of the code that need changing
+
 Status:
 -------
 
-weatherclock is currently stable and ready for use.
+weatherclock is stable and ready for use but no support is offered.
 
 Hardware
 --------
 weatherclock is designed to be run on a Raspberry Pi with the Raspberry Pi 7" Touchscreen display.  It has also been tested on a 16:9 HDMI monitor
+It can be also set to run on Windows 10 under Python 3.x
 
 
 Installation requirements for Raspberry Pi
@@ -61,14 +66,14 @@ Setting wdisp = -1 will just display the clock.
 
 Running weatherclock
 --------------------
+
+For Raspberry Pi
 ```
 python3 /home/pi/weatherclock/weatherclock.py  
 ```
 will start the application.
 
 This MUST be run from the console on which it is to be displayed.
-
-To exit weatherflow press keys Z and X at the same time.
 
 There is a crude way to auto-start it at boot - the usual cron based methods don't work out of the box and I need to work out how to set the correct environment for running.
 
@@ -81,7 +86,11 @@ if ! ps -ax | grep python3 | grep weatherclock.py; then
 fi
 } &> /dev/null
 ```
-When you login using pi as te user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
+When you login using pi as the user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
+
+For Windows 10 it will run from the Python 3.x IDLE environment, load the code and run.
+
+To exit weatherflow press keys Z and X at the same time. (applies to Windows and Raspberry Pi)
 
 Using Weatherclock
 ------------------

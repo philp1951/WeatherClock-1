@@ -1,19 +1,25 @@
 #! /usr/bin/env python
-import pygame , sys , math, time, os, requests, json
+import pygame , sys , math, time, os, requests, json, random
 from pygame.locals import *
 
-# set to point display to the attached TFT Touch Screen if fitted
-os.environ['SDL_VIDEODRIVER']="directfb"
+# set to point display to the attached TFT Touch Screen if fitted - uncoment to select this option
+# Need to uncomment to run on Raspberry Pi with touch screen
+
+#os.environ['SDL_VIDEODRIVER']="directfb"
 
 pygame.init()
-bg = pygame.display.set_mode()
+
+# ONLY ONE OF THESE TWO LINES SHOULD BE UNCOMMENTED!!
+
+#bg = pygame.display.set_mode()         # Uncomment this line for Raspberry Pi
+bg = pygame.display.set_mode((720,480)) # Uncomment this line for Windows 10 - edit screen size if desired
 
 pygame.mouse.set_visible(False)
 
 # CUSTOM SETTINGS START HERE
 # Information used to get data from CumulusMX system.
 # set wdisp = 1 to enable CumulusMX support, -1 to disable
-# Default is no weather display
+# Default is weather display
 
 wdisp = int(1)
 
@@ -39,6 +45,9 @@ calcolour      = (255, 255, 0)
 
 # CUSTOM SETTINGS END HERE
 
+# Generate random int used to prevent multiple occurences requesting data at same time
+
+delta = random.randint (1,15)
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
@@ -145,7 +154,7 @@ while True :
     retrievehm = time.strftime("%H:%M",time.localtime(time.time()))
     retrievesec = time.strftime("%S",time.localtime(time.time()))
     retrieveday = time.strftime("%a",time.localtime(time.time()))
-    retrievedate = time.strftime("%-d",time.localtime(time.time()))
+    retrievedate = time.strftime("%d",time.localtime(time.time()))
     retrievemon = time.strftime("%b",time.localtime(time.time()))
     retrieveyr = time.strftime("%Y",time.localtime(time.time()))
     daydate = retrieveday + " " + retrievedate
@@ -156,8 +165,9 @@ while True :
     digiclockday = dayfont.render(daydate,True,clockcolour)
     digiclockmon = dayfont.render(yrmon,True,clockcolour)
 
-#Update weather info every 30 seconds
-    if int(retrievesec) == 30 or int(retrievesec) == 0 and wdisp > 0:
+#Update weather info every 30 seconds - offset by random number between 0 and 15
+    
+    if int(retrievesec) == (30+delta) or int(retrievesec) == (0 + delta) and wdisp > 0:
         x = requests.get(weatherURL, timeout = 2)
         if x.status_code == 200:
             # process JSON data if valid
