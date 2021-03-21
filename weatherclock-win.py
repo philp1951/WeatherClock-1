@@ -12,7 +12,7 @@ pygame.init()
 # ONLY ONE OF THESE TWO LINES SHOULD BE UNCOMMENTED!!
 
 #bg = pygame.display.set_mode()         # Uncomment this line for Raspberry Pi
-bg = pygame.display.set_mode((720,480)) # Uncomment this line for Windows 10 - edit screen size if desired
+bg = pygame.display.set_mode((800,480)) # Uncomment this line for Windows 10 - edit screen size if desired
 
 pygame.mouse.set_visible(False)
 
@@ -32,7 +32,7 @@ wdisp = int(1)
 # If your station does NOT have a UV sensor remove the &UV from the end of the next variable
 # and comment out lines with the variable "wuv" in them - a total of 5 lines.  Search for "wuv" and comment out the lines
 
-weathertags = "temp&rfall&wlatest&currentwdir&press&tempunit&rainunit&pressunit&windunit&sunrise&sunset&UV"
+weathertags = "temp&rfall&wlatest&currentwdir&press&tempunit&rainunit&pressunit&windunit&temptrend&presstrendval&sunrise&sunset&UV"
 weatherIP = "http://192.168.1.17:8998/api/tags/process.json?"  # CHANGE address to point to your CumulusMX system
 
 # Change colour to preference (R,G,B) 255 max value
@@ -42,7 +42,9 @@ seccolour      = (0, 255, 0)
 timecolour     = (255,0,255)
 weacolour      = (255, 255, 0)
 calcolour      = (255, 255, 0)
-
+trendcolourup     = (0, 255, 0)  #GREEN
+trendcolourdown   = (255, 0, 0)  #RED
+trendcoloursteady = (0, 0, 255)  #BLUE
 # CUSTOM SETTINGS END HERE
 
 # Generate random int used to prevent multiple occurences requesting data at same time
@@ -64,10 +66,20 @@ xcentre        = int(bg.get_width()/2)
 ycentre        = int(bg.get_height()/2)
 yheight        = int(bg.get_height())
 xtxtpos        = int(bg.get_width()*0.6)
+trendpos       = int(bg.get_width()*0.58)
 txthmy         = int(ycentre-digiclockspace)
 txtsecy        = int(ycentre+digiclockspace)
 txtday         = int(ycentre-(2.5*digiclockspace))
 txtmon         = int(ycentre+(2.5*digiclockspace))
+
+# Y position for datat line (8 in total)
+yt1         =    int(yheight*0.01)
+yt2         =    int(yheight*0.14)
+yt3         =    int(yheight*0.28)
+yt4         =    int(yheight*0.42)
+yt5         =    int(yheight*0.56)
+yt6         =    int(yheight*0.7)
+yt7         =    int(yheight*0.84)
 
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
@@ -110,6 +122,8 @@ if wdisp > 0:
             wuv = "UV  "+ weather["UV"]
             wsup = "Sunrise " + weather["sunrise"]
             wsdown = "Sunset  " + weather["sunset"]
+            tempt = float(weather["temptrend"])
+            presst = float(weather["presstrendval"])
     if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
@@ -166,7 +180,7 @@ while True :
     digiclockmon = dayfont.render(yrmon,True,clockcolour)
 
 #Update weather info every 30 seconds - offset by random number between 0 and 15
-    
+
     if int(retrievesec) == (30+delta) or int(retrievesec) == (0 + delta) and wdisp > 0:
         x = requests.get(weatherURL, timeout = 2)
         if x.status_code == 200:
@@ -179,6 +193,8 @@ while True :
             wuv = "UV  "+ weather["UV"]
             wsup = "Sunrise " + weather["sunrise"]
             wsdown = "Sunset  " + weather["sunset"]
+            tempt = float(weather["temptrend"])
+            presst = float(weather["presstrendval"])
         if x.status_code != 200:
             wwind = " "
             wtemp = "NO WEATHER!"
@@ -198,13 +214,13 @@ while True :
         ind5txt = dayfont.render(wuv,True,weacolour)
         ind6txt = dayfont.render(wsup,True,weacolour)
         ind7txt = dayfont.render(wsdown,True,weacolour)
-        txt1pos = (xtxtpos,int(yheight*0.01))
-        txt2pos = (xtxtpos,int(yheight*0.14))
-        txt3pos = (xtxtpos,int(yheight*0.28))
-        txt4pos = (xtxtpos,int(yheight*0.42))
-        txt5pos = (xtxtpos,int(yheight*0.56))
-        txt6pos = (xtxtpos,int(yheight*0.7))
-        txt7pos = (xtxtpos,int(yheight*0.84))
+        txt1pos = (xtxtpos,yt1)
+        txt2pos = (xtxtpos,yt2)
+        txt3pos = (xtxtpos,yt3)
+        txt4pos = (xtxtpos,yt4)
+        txt5pos = (xtxtpos,yt5)
+        txt6pos = (xtxtpos,yt6)
+        txt7pos = (xtxtpos,yt7)
 
     # Align it
     txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
@@ -227,8 +243,32 @@ while True :
         bg.blit(ind6txt, txt6pos)
         bg.blit(ind7txt, txt7pos)
 
+# Now draw trend dots
+
+    if tempt > 0.0:
+        tcolour = trendcolourup
+    elif tempt < 0.0:
+        tcolour = trendcolourdown
+    elif tempt == 0.0:
+        tcolour = trendcoloursteady
+    pygame.draw.circle(bg,tcolour,(trendpos,int(yt1+(weatxtsize/4))),dotsize)
+
+    if presst > 0.0:
+        tcolour = trendcolourup
+    elif presst < 0.0:
+        tcolour = trendcolourdown
+    elif presst == 0.0:
+        tcolour = trendcoloursteady
+
+    pygame.draw.circle(bg,tcolour,(trendpos,int(yt2+(weatxtsize/4))),dotsize)
+
+# pause a bit then repeat!
+
     time.sleep(0.04)
     pygame.time.Clock().tick(25)
+
+#Check for ending codes
+
     for event in pygame.event.get() :
         if event.type == QUIT:
             pygame.quit()

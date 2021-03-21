@@ -1,6 +1,6 @@
 weatherclock
 
-Version 1.3
+Version 1.3.2
 
 Weatherclock is a Raspberry Pi "Studio" style clock written in python3 using pygame with calendar and weather display on (16:9) monitors, displays and TVs.
 
@@ -88,8 +88,11 @@ fi
 ```
 When you login using pi as the user name this checks to see if python3 is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user pi without generating errors.  Setting auto login to console using raspi-config should auto start weatherclock at boot time.
 
-For Windows 10 it will run from the Python 3.x IDLE environment, load the code and run.
+For Windows sytems (e.g. Windows 10, Ubuntu 20.04 etc) it will run from the Python 3.x environment.  From a terminal go to the relevant directory and start Python3 with the correct file.  E.G
 
+```
+>Python3 weatherclock-win.py  
+```
 To exit weatherflow press keys Z and X at the same time. (applies to Windows and Raspberry Pi)
 
 Using Weatherclock
@@ -98,12 +101,17 @@ The LHS of the screen will display a "studio" style clock with a central display
 
 When it is configured for CumulusMX connection the RHS can display the following weather information: (Temp)erature, (Press)ure, (Wind) speed and direction, (Rain)fall, (UV)index together with Sunrise and Sunset times for the day.  
 
+The temperature an pressure values have trend dots associated with them. The indicate the following:
+    RED     Falling value
+    GREEN   Rising value
+    BLUE    Steady value
+
 In this configuration weatherclock starts up with the weather display on the RHS.  
 
 User configuration
 ------------------
 
-The source file (weatherclock.py) in the download can be modified as you see fit.  Please take a copy before you change anything - it saves problems later on. I recommend using an editor that 'understands' Python.  Python3 is very 'picky' about formatting - a space in the wrong place causes problems. I used the editor ATOM (https://www.atom.io)
+The source files (weatherclock.py / weatherclock-win.py) in the download can be modified as you see fit.  Please take a copy before you change anything - it saves problems later on. I recommend using an editor that 'understands' Python.  Python3 is very 'picky' about formatting - a space in the wrong place causes problems. I used the editor ATOM (https://www.atom.io)
 
 The usual things to change (other than the variables as explained above) are the colour definitions - these are defined as three numbers representing (Red, Green, Blue) with values between 0 (off) to 255 (full intensity). A bright yellow, for instance is (255, 255, 0).
 
