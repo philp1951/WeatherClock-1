@@ -14,8 +14,7 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 
 # URL of your web server and the realtimeclock.txt file
 
-#weatherURL = "https://your.web.server/yourrealtimeclock.txt"
-weatherURL = "https://goosegate.uk/realtimeclock.txt"
+weatherURL = "https://your.web.server/yourrealtimeclock.txt"
 
 updatesec = int(15)
 
