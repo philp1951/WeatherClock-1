@@ -2,68 +2,69 @@
 import pygame , sys , math, time, os, requests, json, random
 from pygame.locals import *
 
-# set to point display to the attached TFT Touch Screen if fitted - uncoment to select this option
-# Need to uncomment to run on Raspberry Pi with touch screen
-# Comment next line OUT to run on a windowed system (e.g. Windows10, Ubuntu etc)
-
-os.environ['SDL_VIDEODRIVER']="directfb"
-
 pygame.init()
+screen = pygame.display.set_mode((800,480)) # set physical screen
+bg = pygame.Surface((400,480)) # Surface for clock
+we = pygame.Surface((400,480)) # surface for weather information
 
-# ONLY ONE OF THESE TWO LINES SHOULD BE UNCOMMENTED!!
-
-bg = pygame.display.set_mode()         # Uncomment this line for Raspberry Pi
-#bg = pygame.display.set_mode((800,480)) # Uncomment this line for Windows 10 - edit screen size if desired
-
-pygame.mouse.set_visible(False)
+pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be needed!)
 
 # CUSTOM SETTINGS START HERE
 # Information used to get data from CumulusMX system.
-# set wdisp = 1 to enable CumulusMX support, -1 to disable
-# Default is weather display
 
-wdisp = int(1)
+# URL of your web server and the realtimeclock.txt file
 
-# this section is used to set the IP address of the system.
-# select both weathertags and weatherIP IF you are geting data directly
-# from you local CumulusMX system
-#NB YOU WILL NEED TO EDIT THE ADDRESS TO REFLECT YOUR SYSTEM
+#weatherURL = "https://your.web.server/yourrealtimeclock.txt"
+weatherURL = "https://goosegate.uk/realtimeclock.txt"
 
-# Series of webtags to retrieve from CumulusMX
-# If your station does NOT have a UV sensor remove the &UV from the end of the next variable
-# and comment out lines with the variable "wuv" in them - a total of 5 lines.  Search for "wuv" and comment out the lines
-
-weathertags = "temp&rfall&wlatest&currentwdir&press&tempunit&rainunit&pressunit&windunit&temptrend&presstrendval&sunrise&sunset&UV"
-weatherIP = "http://192.168.1.17:8998/api/tags/process.json?"  # CHANGE address to point to your CumulusMX system
+updatesec = int(15)
 
 # Change colour to preference (R,G,B) 255 max value
-bgcolour       = (0,   0,   0  )
+bgcolour       = (0, 0, 0)
+wecolour       = (0, 0, 0)
 clockcolour    = (255, 0, 0)
 seccolour      = (0, 255, 0)
 timecolour     = (255,0,255)
 weacolour      = (255, 255, 0)
 calcolour      = (255, 255, 0)
+tabcolour      = (255, 140, 50)
 trendcolourup     = (0, 255, 0)  #GREEN
 trendcolourdown   = (255, 0, 0)  #RED
 trendcoloursteady = (0, 0, 255)  #BLUE
-
+temptrendcol = trendcoloursteady
+presstrendcol = trendcoloursteady
 # CUSTOM SETTINGS END HERE
 
 # Generate random int used to prevent multiple occurences requesting data at same time
-
 delta = random.randint (1,15)
+
+firsttime = int(1)  # Used to display weather data at first run
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
 digiclockspace = int(bg.get_height()/12)
 dotsize        = int(bg.get_height()/90)
-hradius        = bg.get_height()/2.5
-secradius      = hradius - (bg.get_height()/26)
+#hradius        = bg.get_height()/2.5
+hradius        = int((bg.get_width()-20)/2)
+secradius      = hradius - (bg.get_width()/25)
 indtxtsize     = int(bg.get_height()/5)
 weatxtsize     = int(bg.get_height()/8)
 
+#  Next set of values are fixed - i.e. NOT proportinal to display sizes other than 800*480
+#  If you want to have a larger screen display then these will need changing.
+#  Also the two font sizes for the table display (lucida) will need changing
+
+taby = 15
+tabx = 90
+tabinc = 120 # spacing for table data
+tabsp = 80
+datax = 30
+datay = 50
+tabj = 15 # justification for table headers
+tabv = 15 # justification for data
+
 # Coords of items on display
-xclockpos      = int(bg.get_width()*0.2875)
+xclockpos      = int(bg.get_width()*0.5)
 xcentre        = int(bg.get_width()/2)
 ycentre        = int(bg.get_height()/2)
 yheight        = int(bg.get_height())
@@ -74,25 +75,11 @@ txtsecy        = int(ycentre+digiclockspace)
 txtday         = int(ycentre-(2.5*digiclockspace))
 txtmon         = int(ycentre+(2.5*digiclockspace))
 
-# Y position for datat line (8 in total)
-yt1         =    int(yheight*0.01)
-yt2         =    int(yheight*0.14)
-yt3         =    int(yheight*0.28)
-yt4         =    int(yheight*0.42)
-yt5         =    int(yheight*0.56)
-yt6         =    int(yheight*0.7)
-yt7         =    int(yheight*0.84)
-
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
 dayfont       = pygame.font.Font(None,int(digiclocksize/2))
-indfont       = pygame.font.Font(None,indtxtsize)
-weafont       = pygame.font.Font(None,weatxtsize)
-
-
-# Form the full CumulusMX request URL
-
-weatherURL = weatherIP+weathertags
+weafont        = pygame.font.SysFont('lucida', 48)
+tabfont        = pygame.font.SysFont('lucida', 32)
 
 # Parametric Equations of a Circle to get the markers
 # 90 Degree offset to start at 0 seconds marker
@@ -110,38 +97,175 @@ def paraeqshx(shx):
 def paraeqshy(shy):
     return ycentre-(int(hradius*(math.sin(math.radians((shy)+90)))))
 
-# NOW get data
+# NOW get data - needed to generate headings
 
-if wdisp > 0:
-    x = requests.get(weatherURL, timeout=2)
-    if x.status_code == 200:
-            # process JSON data if valid
-            weather = x.json()
-            wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "Temp  "+weather["temp"] +  " \u00B0" + weather["tempunit"][6:]
-            wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
-            wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
-            wuv = "UV  "+ weather["UV"]
-            wsup = "Sunrise " + weather["sunrise"]
-            wsdown = "Sunset  " + weather["sunset"]
-            tempt = float(weather["temptrend"])
-            presst = float(weather["presstrendval"])
-    if x.status_code != 200:
-            wwind = " "
-            wtemp = "NO WEATHER!"
-            wrain = str(x.status_code)
-            wpress = " "
-            wuv = " "
-            wsup = " "
-            wdown = " "
+x = requests.get(weatherURL, timeout=2)
+weather = x.json()
 
-# Main loop:  Keyboard "z" and "x" togther will exit the program
+# Generate Display table headings
+
+h1t1 =  "Temp" +" \u00B0" + weather["tempunit"]
+h1t2 =  "High"
+h1t3 =  "Low"
+
+h11 = tabfont.render(h1t1, True, tabcolour)
+h12 = tabfont.render(h1t2, True, tabcolour)
+h13 = tabfont.render(h1t3, True, tabcolour)
+
+h1t1Rect = h11.get_rect()
+h1t2Rect = h12.get_rect()
+h1t3Rect = h13.get_rect()
+
+h1t1Rect.center = (tabx, taby)
+h1t2Rect.center = (tabx + tabinc, taby)
+h1t3Rect.center = (tabx+ 2*tabinc, taby)
+
+# Line 2 Headings (Pressure)
+
+h2t1 =  "Press" +" " + weather["pressunit"]
+h2t2 =  "High"
+h2t3 =  "Low"
+
+h21 = tabfont.render(h2t1, True, tabcolour)
+h22 = tabfont.render(h2t2, True, tabcolour)
+h23 = tabfont.render(h2t3, True, tabcolour)
+h2t1Rect = h21.get_rect()
+h2t2Rect = h22.get_rect()
+h2t3Rect = h23.get_rect()
+
+h2t1Rect.center = (tabx, taby+tabsp)
+h2t2Rect.center = (tabx + tabinc, taby+tabsp)
+h2t3Rect.center = (tabx+ 2*tabinc, taby+tabsp)
+
+# Line 3 Headings (Wind)
+
+h3t1 =  "Wind" +" " + weather["windunit"]
+h3t2 =  "Gust"
+h3t3 =  "From"
+
+h31 = tabfont.render(h3t1, True, tabcolour)
+h32 = tabfont.render(h3t2, True, tabcolour)
+h33 = tabfont.render(h3t3, True, tabcolour)
+h3t1Rect = h31.get_rect()
+h3t2Rect = h32.get_rect()
+h3t3Rect = h33.get_rect()
+
+h3t1Rect.center = (tabx, taby+2*tabsp)
+h3t2Rect.center = (tabx + tabinc, taby+2*tabsp)
+h3t3Rect.center = (tabx+ 2*tabinc, taby+2*tabsp)
+
+# Line 4 Headings (Rain)
+
+h4t1 =  "Rain" +" " + weather["rainunit"]
+h4t2 =  "Month"
+h4t3 =  "Year"
+
+h41 = tabfont.render(h4t1, True, tabcolour)
+h42 = tabfont.render(h4t2, True, tabcolour)
+h43 = tabfont.render(h4t3, True, tabcolour)
+h4t1Rect = h41.get_rect()
+h4t2Rect = h42.get_rect()
+h4t3Rect = h43.get_rect()
+
+h4t1Rect.center = (tabx, taby+3*tabsp)
+h4t2Rect.center = (tabx + tabinc, taby+3*tabsp)
+h4t3Rect.center = (tabx+ 2*tabinc, taby+3*tabsp)
+
+# Line 5 Headings (Solar)
+
+h5t1 =  "Sun w/m"+"\u00B2"
+h5t2 =  "UVI"
+h5t3 =  "Sun Hours"
+
+h51 = tabfont.render(h5t1, True, tabcolour)
+h52 = tabfont.render(h5t2, True, tabcolour)
+h53 = tabfont.render(h5t3, True, tabcolour)
+h5t1Rect = h51.get_rect()
+h5t2Rect = h52.get_rect()
+h5t3Rect = h53.get_rect()
+
+h5t1Rect.center = (tabx, taby+4*tabsp)
+h5t2Rect.center = (tabx + tabinc, taby+4*tabsp)
+h5t3Rect.center = (tabx+ 2*tabinc, taby+4*tabsp)
+
+# Line 6 Headings (Sun)
+
+h6t1 =  "Sunrise"
+h6t2 =  "Sunset"
+
+
+h61 = tabfont.render(h6t1, True, tabcolour)
+h62 = tabfont.render(h6t2, True, tabcolour)
+
+h6t1Rect = h61.get_rect()
+h6t2Rect = h62.get_rect()
+
+
+h6t1Rect.center = (tabx, taby+5*tabsp)
+h6t2Rect.center = (tabx + tabinc, taby+5*tabsp)
+
+
+# MAIN LOOP:  KEYBOARD "z" AND "x" TOGTHER WILL EXIT THE PROGRAM
 
 while True :
+
+    bg.fill(bgcolour)  # redraw clock - start from scratch
+
+    # Retrieve seconds and turn them into integers
+    sectime = int(time.strftime("%S",time.localtime(time.time())))
+
+    # To get the dots in sync with the seconds
+    secdeg  = (sectime+1)*6
+
+    # Draw second markers
+    smx=smy=0
+    #prx=pry=secdeg-6
+
+    while smx < secdeg:
+       pygame.draw.circle(bg,seccolour,(paraeqsmx(smx),paraeqsmy(smy)),dotsize)
+       if secdeg > 0:
+           pygame.draw.circle(bg,bgcolour,(paraeqsmx(0),paraeqsmy(0)),dotsize)
+       smy += 6  # 6 Degrees per second
+       smx += 6
+
+    # Draw hour markers
+    shx=shy=0
+    while shx < 360:
+        pygame.draw.circle(bg,clockcolour,(paraeqshx(shx),paraeqshy(shy)),dotsize)
+        shy += 30  # 30 Degrees per hour
+        shx += 30
+
+    # Retrieve time for digital clock
+    retrievehm = time.strftime("%H:%M",time.localtime(time.time()))
+    retrievesec = time.strftime("%S",time.localtime(time.time()))
+    retrieveday = time.strftime("%a",time.localtime(time.time()))
+    retrievedate = time.strftime("%d",time.localtime(time.time()))
+    retrievemon = time.strftime("%b",time.localtime(time.time()))
+    retrieveyr = time.strftime("%Y",time.localtime(time.time()))
+    daydate = retrieveday + " " + retrievedate
+    yrmon = retrievemon + " " + retrieveyr
+
+    digiclockhm = clockfont.render(retrievehm,True,timecolour)
+    digiclocksec = clockfont.render(retrievesec,True,timecolour)
+    digiclockday = dayfont.render(daydate,True,clockcolour)
+    digiclockmon = dayfont.render(yrmon,True,clockcolour)
+
+    txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
+    txtpossec     = digiclocksec.get_rect(centerx=xclockpos,centery=txtsecy)
+    txtposday     = digiclockday.get_rect(centerx=xclockpos,centery=txtday)
+    txtposmon     = digiclockmon.get_rect(centerx=xclockpos,centery=txtmon)
+
+    bg.blit(digiclockhm, txtposhm)
+    bg.blit(digiclocksec, txtpossec)
+    bg.blit(digiclockday, txtposday)
+    bg.blit(digiclockmon, txtposmon)
+
+
+    screen.blit(bg, (0, 0))
+    screen.blit(we, (400, 0))
+
+    #pygame.display.update()
     pygame.display.update()
-
-    bg.fill(bgcolour)
-
     # Retrieve seconds and turn them into integers
     sectime = int(time.strftime("%S",time.localtime(time.time())))
 
@@ -183,91 +307,188 @@ while True :
 
 #Update weather info every 30 seconds - offset by random number between 0 and 15
 
-    if int(retrievesec) == (30+delta) or int(retrievesec) == (0 + delta) and wdisp > 0:
-        x = requests.get(weatherURL, timeout = 2)
-        if x.status_code == 200:
-            # process JSON data if valid
+    if (int(retrievesec) + delta) % updatesec == 0 or firsttime > 0:
+        if firsttime == 0:
+            x = requests.get(weatherURL, timeout = 2)
             weather = x.json()
-            wwind = "Wind "+ weather["wlatest"] + " "+ weather["windunit"] + " " + weather["currentwdir"]
-            wtemp = "Temp  "+weather["temp"] + " \u00B0" + weather["tempunit"][6:]
-            wrain = "Rain  "+weather["rfall"] + " " + weather["rainunit"]
-            wpress = "Press  "+weather["press"] + " " + weather["pressunit"]
-            wuv = "UV  "+ weather["UV"]
-            wsup = "Sunrise " + weather["sunrise"]
-            wsdown = "Sunset  " + weather["sunset"]
-            tempt = float(weather["temptrend"])
-            presst = float(weather["presstrendval"])
-        if x.status_code != 200:
-            wwind = " "
-            wtemp = "NO WEATHER!"
-            wrain = str(x.status_code)
-            wpress = " "
-            wuv = " "
-            wsup = " "
-            wdown = " "
+        firsttime = 0           # reset firsttime indicator
+        we.fill(wecolour)       # clear surface
 
-    # Set up data for right hand side of screen (weather)
+    # Set the trend colour for temp and pressure.
+    # Rising = GREEN: Falling = RED: Steady = BLUE
 
-    if wdisp > 0:
-        ind1txt = dayfont.render(wtemp,True,weacolour)
-        ind2txt = dayfont.render(wpress,True,weacolour)
-        ind3txt = dayfont.render(wwind,True,weacolour)
-        ind4txt = dayfont.render(wrain,True,weacolour)
-        ind5txt = dayfont.render(wuv,True,weacolour)
-        ind6txt = dayfont.render(wsup,True,weacolour)
-        ind7txt = dayfont.render(wsdown,True,weacolour)
-        txt1pos = (xtxtpos,yt1)
-        txt2pos = (xtxtpos,yt2)
-        txt3pos = (xtxtpos,yt3)
-        txt4pos = (xtxtpos,yt4)
-        txt5pos = (xtxtpos,yt5)
-        txt6pos = (xtxtpos,yt6)
-        txt7pos = (xtxtpos,yt7)
-
-    # Align it
-    txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
-    txtpossec     = digiclocksec.get_rect(centerx=xclockpos,centery=txtsecy)
-    txtposday     = digiclockday.get_rect(centerx=xclockpos,centery=txtday)
-    txtposmon     = digiclockmon.get_rect(centerx=xclockpos,centery=txtmon)
+        tempt = float(weather["temptrend"])
+        presst = float(weather["presstrendval"])
 
 
-    # Render the text
-    bg.blit(digiclockhm, txtposhm)
-    bg.blit(digiclocksec, txtpossec)
-    bg.blit(digiclockday, txtposday)
-    bg.blit(digiclockmon, txtposmon)
-    bg.blit(ind1txt, txt1pos)
-    bg.blit(ind2txt, txt2pos)
-    bg.blit(ind3txt, txt3pos)
-    bg.blit(ind4txt, txt4pos)
-    if wdisp > 0:
-        bg.blit(ind5txt, txt5pos)
-        bg.blit(ind6txt, txt6pos)
-        bg.blit(ind7txt, txt7pos)
+        if tempt > 0.0:
+            tcolour = trendcolourup
+        elif tempt < 0.0:
+            tcolour = trendcolourdown
+        elif tempt == 0.0:
+            tcolour = trendcoloursteady
 
-# Now draw trend dots
+        if presst > 0.0:
+            pcolour = trendcolourup
+        elif presst < 0.0:
+            pcolour = trendcolourdown
+        elif presst == 0.0:
+            pcolour = trendcoloursteady
 
-    if tempt > 0.0:
-        tcolour = trendcolourup
-    elif tempt < 0.0:
-        tcolour = trendcolourdown
-    elif tempt == 0.0:
-        tcolour = trendcoloursteady
-    pygame.draw.circle(bg,tcolour,(trendpos,int(yt1+(weatxtsize/4))),dotsize)
+    # NOW WE CAN CREATE THE VALUES PART OF THE TABLE
 
-    if presst > 0.0:
-        tcolour = trendcolourup
-    elif presst < 0.0:
-        tcolour = trendcolourdown
-    elif presst == 0.0:
-        tcolour = trendcoloursteady
+        #Line 1 (Temp) data
 
-    pygame.draw.circle(bg,tcolour,(trendpos,int(yt2+(weatxtsize/4))),dotsize)
+        l1t1 =  weather["temp"]
+        l1t2 =  weather["tempTH"]
+        l1t3 =  weather["tempTL"]
+
+        l11 = weafont.render(l1t1, True, tcolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+        l13 = weafont.render(l1t3, True, weacolour)
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+        l1t3Rect = l13.get_rect()
+
+        l1t1Rect.center = (tabx, datay)
+        l1t2Rect.center = (tabx + tabinc, datay)
+        l1t3Rect.center = (tabx+ 2*tabinc, datay)
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(l13, l1t3Rect)
+        we.blit(h11, h1t1Rect)
+        we.blit(h12, h1t2Rect)
+        we.blit(h13, h1t3Rect)
+
+        # Line 2 (Pressure)
+
+        l1t1 =  weather["press"]
+        l1t2 =  weather["pressTH"]
+        l1t3 =  weather["pressTL"]
+
+        l11 = weafont.render(l1t1, True, pcolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+        l13 = weafont.render(l1t3, True, weacolour)
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+        l1t3Rect = l13.get_rect()
+
+        l1t1Rect.center = (tabx, datay+tabsp)
+        l1t2Rect.center = (tabx + tabinc, datay+tabsp)
+        l1t3Rect.center = (tabx+ 2*tabinc, datay+tabsp)
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(l13, l1t3Rect)
+        we.blit(h21, h2t1Rect)
+        we.blit(h22, h2t2Rect)
+        we.blit(h23, h2t3Rect)
+
+        # Line 3 (Wind)
+
+        l1t1 =  weather["wlatest"]
+        l1t2 =  weather["wgust"]
+        l1t3 =  weather["currentwdir"]
+
+        l11 = weafont.render(l1t1, True, weacolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+        l13 = weafont.render(l1t3, True, weacolour)
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+        l1t3Rect = l13.get_rect()
+
+        l1t1Rect.center = (tabx, datay+2*tabsp)
+        l1t2Rect.center = (tabx + tabinc, datay+2*tabsp)
+        l1t3Rect.center = (tabx+ 2*tabinc, datay+2*tabsp)
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(l13, l1t3Rect)
+        we.blit(h31, h3t1Rect)
+        we.blit(h32, h3t2Rect)
+        we.blit(h33, h3t3Rect)
+
+        # Line 4 (Rain)
+
+        l1t1 =  weather["rfall"]
+        l1t2 =  weather["rmonth"]
+        l1t3 =  weather["ryear"]
+
+        l11 = weafont.render(l1t1, True, weacolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+        l13 = weafont.render(l1t3, True, weacolour)
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+        l1t3Rect = l13.get_rect()
+
+        l1t1Rect.center = (tabx, datay+3*tabsp)
+        l1t2Rect.center = (tabx + tabinc, datay+3*tabsp)
+        l1t3Rect.center = (tabx+ 2*tabinc, datay+3*tabsp)
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(l13, l1t3Rect)
+        we.blit(h41, h4t1Rect)
+        we.blit(h42, h4t2Rect)
+        we.blit(h43, h4t3Rect)
+
+        # Line 5 (Solar)
+
+        l1t1 =  weather["SolarRad"]
+        l1t2 =  weather["UV"]
+        l1t3 =  weather["SunshineHours"]
+
+        l11 = weafont.render(l1t1, True, weacolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+        l13 = weafont.render(l1t3, True, weacolour)
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+        l1t3Rect = l13.get_rect()
+
+        l1t1Rect.center = (tabx, datay+4*tabsp)
+        l1t2Rect.center = (tabx + tabinc, datay+4*tabsp)
+        l1t3Rect.center = (tabx+ 2*tabinc, datay+4*tabsp)
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(l13, l1t3Rect)
+        we.blit(h51, h5t1Rect)
+        we.blit(h52, h5t2Rect)
+        we.blit(h53, h5t3Rect)
+
+        # Line 6 (Sunrise/set)
+
+        l1t1 =  weather["sunrise"]
+        l1t2 =  weather["sunset"]
+
+
+        l11 = weafont.render(l1t1, True, weacolour)
+        l12 = weafont.render(l1t2, True, weacolour)
+
+
+        l1t1Rect = l11.get_rect()
+        l1t2Rect = l12.get_rect()
+
+
+        l1t1Rect.center = (tabx, datay+5*tabsp)
+        l1t2Rect.center = (tabx + tabinc, datay+5*tabsp)
+
+
+        we.blit(l11, l1t1Rect)
+        we.blit(l12, l1t2Rect)
+        we.blit(h61, h6t1Rect)
+        we.blit(h62, h6t2Rect)
 
 # pause a bit then repeat!
 
-    time.sleep(0.04)
-    pygame.time.Clock().tick(25)
+    time.sleep(0.1)
+    pygame.time.Clock().tick(10)
 
 #Check for ending codes
 
