@@ -7,7 +7,7 @@ screen = pygame.display.set_mode((800,480)) # set physical screen
 bg = pygame.Surface((400,480)) # Surface for clock
 we = pygame.Surface((400,480)) # surface for weather information
 
-pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be needed!)
+pygame.mouse.set_visible(False) # Set true if you need to use mouse (shouldn't be needed!)
 
 # CUSTOM SETTINGS START HERE
 # Information used to get data from CumulusMX system.

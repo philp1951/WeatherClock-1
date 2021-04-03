@@ -1,6 +1,6 @@
 weatherclock
 
-Version 1.4.0
+Version 1.4.1
 
 Weatherclock is a Raspberry Pi "Studio" style clock written in python3 using pygame with day/date and weather information.
 
@@ -118,6 +118,13 @@ You may wish to change the following line to reflect the actual real time update
 updatesec = int(15)
 ```
 The default above will re-read yourrealtimeclock.txt (or whatever you call it) file every 15 seconds.  
+
+```
+timout = int(1)
+```
+Time out value (in seconds) for the GET request. The supplied value should be sufficient for most networks.
+
+The values under ERROR on the display indicates the last error code and number of error.  
 
 The usual things to change (other than the variables as explained above) are the colour definitions - these are defined as three numbers representing (Red, Green, Blue) with values between 0 (off) to 255 (full intensity). A bright yellow, for instance is (255, 255, 0).
 
