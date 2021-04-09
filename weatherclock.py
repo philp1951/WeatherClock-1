@@ -7,7 +7,7 @@ screen = pygame.display.set_mode((800,480)) # set physical screen
 bg = pygame.Surface((400,480)) # Surface for clock
 we = pygame.Surface((400,480)) # surface for weather information
 
-pygame.mouse.set_visible(False) # Set true if you need to use mouse (shouldn't be needed!)
+pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be needed!)
 
 # CUSTOM SETTINGS START HERE
 # Information used to get data from CumulusMX system.
@@ -16,7 +16,13 @@ pygame.mouse.set_visible(False) # Set true if you need to use mouse (shouldn't b
 
 weatherURL = "https://your.web.server/yourrealtimeclock.txt"
 
+
 updatesec = int(15)
+timout = 1          #timeout value (secs) for GET requests
+debug = False      # set True if you need to debug errors
+
+# If using debug = True then start the application with something like
+# python weatherclock.py >> error.log to gather connection error data
 
 # Change colour to preference (R,G,B) 255 max value
 bgcolour       = (0, 0, 0)
@@ -38,6 +44,10 @@ presstrendcol = trendcoloursteady
 delta = random.randint (1,15)
 
 firsttime = int(1)  # Used to display weather data at first run
+tout = int(0)       # used if timeout error occurs
+ecode = str("---")         # request error code if defined
+errtot = int(0)     # Running count of errors
+
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
@@ -76,7 +86,7 @@ txtmon         = int(ycentre+(2.5*digiclockspace))
 
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
-dayfont       = pygame.font.Font(None,int(digiclocksize/2))
+dayfont       = pygame.font.Font(None,int(digiclocksize/1.75))
 weafont        = pygame.font.SysFont('lucida', 48)
 tabfont        = pygame.font.SysFont('lucida', 32)
 
@@ -96,10 +106,25 @@ def paraeqshx(shx):
 def paraeqshy(shy):
     return ycentre-(int(hradius*(math.sin(math.radians((shy)+90)))))
 
-# NOW get data - needed to generate headings
 
-x = requests.get(weatherURL, timeout=2)
-weather = x.json()
+# NOW get first set of data - needed to generate headings
+tout = -1       #set timeout flag to ensure read is completed first time
+while tout < 0:
+    try:
+        x = requests.get(weatherURL, timeout = timout)
+        if x.status_code == 200:
+            weather = x.json()
+            tout = 0         # clear timeout timeout flag
+    except requests.ConnectionError as e:
+        ecode = str(x.status_code)
+        errtot = errtot + 1
+        continue
+    except requests.Timeout as e:
+        ecode = str(x.status_code)
+        tout = -1             # set timeout flag so GET is tried at next attempt
+        errtot = errtot + 1
+        continue
+
 
 # Generate Display table headings
 
@@ -191,18 +216,21 @@ h5t3Rect.center = (tabx+ 2*tabinc, taby+4*tabsp)
 
 h6t1 =  "Sunrise"
 h6t2 =  "Sunset"
+h6t3 =  "Error"
 
 
 h61 = tabfont.render(h6t1, True, tabcolour)
 h62 = tabfont.render(h6t2, True, tabcolour)
+h63 = tabfont.render(h6t3, True, tabcolour)
 
 h6t1Rect = h61.get_rect()
 h6t2Rect = h62.get_rect()
+h6t3Rect = h63.get_rect()
 
 
 h6t1Rect.center = (tabx, taby+5*tabsp)
 h6t2Rect.center = (tabx + tabinc, taby+5*tabsp)
-
+h6t3Rect.center = (tabx + 2*tabinc, taby+5*tabsp)
 
 # MAIN LOOP:  KEYBOARD "z" AND "x" TOGTHER WILL EXIT THE PROGRAM
 
@@ -238,7 +266,7 @@ while True :
     retrievehm = time.strftime("%H:%M",time.localtime(time.time()))
     retrievesec = time.strftime("%S",time.localtime(time.time()))
     retrieveday = time.strftime("%a",time.localtime(time.time()))
-    retrievedate = time.strftime("%d",time.localtime(time.time()))
+    retrievedate = time.strftime("%e",time.localtime(time.time()))
     retrievemon = time.strftime("%b",time.localtime(time.time()))
     retrieveyr = time.strftime("%Y",time.localtime(time.time()))
     daydate = retrieveday + " " + retrievedate
@@ -304,185 +332,216 @@ while True :
     digiclockday = dayfont.render(daydate,True,clockcolour)
     digiclockmon = dayfont.render(yrmon,True,clockcolour)
 
-#Update weather info every 30 seconds - offset by random number between 0 and 15
 
-    if (int(retrievesec) + delta) % updatesec == 0 or firsttime > 0:
-        if firsttime == 0:
-            x = requests.get(weatherURL, timeout = 2)
-            weather = x.json()
-        firsttime = 0           # reset firsttime indicator
-        we.fill(wecolour)       # clear surface
 
     # Set the trend colour for temp and pressure.
     # Rising = GREEN: Falling = RED: Steady = BLUE
 
-        tempt = float(weather["temptrend"])
-        presst = float(weather["presstrendval"])
+    tempt = float(weather["temptrend"])
+    presst = float(weather["presstrendval"])
 
 
-        if tempt > 0.0:
-            tcolour = trendcolourup
-        elif tempt < 0.0:
-            tcolour = trendcolourdown
-        elif tempt == 0.0:
-            tcolour = trendcoloursteady
+    if tempt > 0.0:
+        tcolour = trendcolourup
+    elif tempt < 0.0:
+        tcolour = trendcolourdown
+    elif tempt == 0.0:
+        tcolour = trendcoloursteady
 
-        if presst > 0.0:
-            pcolour = trendcolourup
-        elif presst < 0.0:
-            pcolour = trendcolourdown
-        elif presst == 0.0:
-            pcolour = trendcoloursteady
+    if presst > 0.0:
+        pcolour = trendcolourup
+    elif presst < 0.0:
+        pcolour = trendcolourdown
+    elif presst == 0.0:
+        pcolour = trendcoloursteady
 
-    # NOW WE CAN CREATE THE VALUES PART OF THE TABLE
+# NOW WE CAN CREATE THE VALUES PART OF THE TABLE
+    we.fill(wecolour)       # clear surface
+    #Line 1 (Temp) data
 
-        #Line 1 (Temp) data
+    l1t1 =  weather["temp"]
+    l1t2 =  weather["tempTH"]
+    l1t3 =  weather["tempTL"]
 
-        l1t1 =  weather["temp"]
-        l1t2 =  weather["tempTH"]
-        l1t3 =  weather["tempTL"]
+    l11 = weafont.render(l1t1, True, tcolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(l1t3, True, weacolour)
 
-        l11 = weafont.render(l1t1, True, tcolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-        l13 = weafont.render(l1t3, True, weacolour)
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
 
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-        l1t3Rect = l13.get_rect()
+    l1t1Rect.center = (tabx, datay)
+    l1t2Rect.center = (tabx + tabinc, datay)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay)
 
-        l1t1Rect.center = (tabx, datay)
-        l1t2Rect.center = (tabx + tabinc, datay)
-        l1t3Rect.center = (tabx+ 2*tabinc, datay)
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(l13, l1t3Rect)
+    we.blit(h11, h1t1Rect)
+    we.blit(h12, h1t2Rect)
+    we.blit(h13, h1t3Rect)
 
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
+    # Line 2 (Pressure)
+
+    l1t1 =  weather["press"]
+    l1t2 =  weather["pressTH"]
+    l1t3 =  weather["pressTL"]
+
+    l11 = weafont.render(l1t1, True, pcolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(l1t3, True, weacolour)
+
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
+
+    l1t1Rect.center = (tabx, datay+tabsp)
+    l1t2Rect.center = (tabx + tabinc, datay+tabsp)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay+tabsp)
+
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(l13, l1t3Rect)
+    we.blit(h21, h2t1Rect)
+    we.blit(h22, h2t2Rect)
+    we.blit(h23, h2t3Rect)
+
+    # Line 3 (Wind)
+
+    l1t1 =  weather["wlatest"]
+    l1t2 =  weather["wgust"]
+    l1t3 =  weather["currentwdir"]
+
+    l11 = weafont.render(l1t1, True, weacolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(l1t3, True, weacolour)
+
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
+
+    l1t1Rect.center = (tabx, datay+2*tabsp)
+    l1t2Rect.center = (tabx + tabinc, datay+2*tabsp)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay+2*tabsp)
+
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(l13, l1t3Rect)
+    we.blit(h31, h3t1Rect)
+    we.blit(h32, h3t2Rect)
+    we.blit(h33, h3t3Rect)
+
+    # Line 4 (Rain)
+
+    l1t1 =  weather["rfall"]
+    l1t2 =  weather["rmonth"]
+    l1t3 =  weather["ryear"]
+
+    l11 = weafont.render(l1t1, True, weacolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(l1t3, True, weacolour)
+
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
+
+    l1t1Rect.center = (tabx, datay+3*tabsp)
+    l1t2Rect.center = (tabx + tabinc, datay+3*tabsp)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay+3*tabsp)
+
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(l13, l1t3Rect)
+    we.blit(h41, h4t1Rect)
+    we.blit(h42, h4t2Rect)
+    we.blit(h43, h4t3Rect)
+
+    # Line 5 (Solar)
+
+    l1t1 =  weather["SolarRad"]
+    l1t2 =  weather["UV"]
+    l1t3 =  weather["SunshineHours"]
+
+    l11 = weafont.render(l1t1, True, weacolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(l1t3, True, weacolour)
+
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
+
+    l1t1Rect.center = (tabx, datay+4*tabsp)
+    l1t2Rect.center = (tabx + tabinc, datay+4*tabsp)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay+4*tabsp)
+
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(l13, l1t3Rect)
+    we.blit(h51, h5t1Rect)
+    we.blit(h52, h5t2Rect)
+    we.blit(h53, h5t3Rect)
+
+    # Line 6 (Sunrise/set)
+
+    l1t1 =  weather["sunrise"]
+    l1t2 =  weather["sunset"]
+    lit3 =  ecode + " " + str(errtot)
+
+
+    l11 = weafont.render(l1t1, True, weacolour)
+    l12 = weafont.render(l1t2, True, weacolour)
+    l13 = weafont.render(lit3, True, weacolour)
+
+    l1t1Rect = l11.get_rect()
+    l1t2Rect = l12.get_rect()
+    l1t3Rect = l13.get_rect()
+
+
+    l1t1Rect.center = (tabx, datay+5*tabsp)
+    l1t2Rect.center = (tabx + tabinc, datay+5*tabsp)
+    l1t3Rect.center = (tabx+ 2*tabinc, datay+5*tabsp)
+
+    we.blit(l11, l1t1Rect)
+    we.blit(l12, l1t2Rect)
+    we.blit(h61, h6t1Rect)
+    we.blit(h62, h6t2Rect)
+    if debug:                   # if debug set then display error count on display
         we.blit(l13, l1t3Rect)
-        we.blit(h11, h1t1Rect)
-        we.blit(h12, h1t2Rect)
-        we.blit(h13, h1t3Rect)
+        we.blit(h63, h6t3Rect)
 
-        # Line 2 (Pressure)
+    pygame.display.update()
 
-        l1t1 =  weather["press"]
-        l1t2 =  weather["pressTH"]
-        l1t3 =  weather["pressTL"]
+# Update weather info every 15 seconds - offset by random number between 0 and 15
+# Handle timeouts by retrying request in the next pass
 
-        l11 = weafont.render(l1t1, True, pcolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-        l13 = weafont.render(l1t3, True, weacolour)
+    if (int(retrievesec) + delta) % updatesec > 0:
+        firsttime = 1      # reset first time to prevent multiple GETs at each update time
 
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-        l1t3Rect = l13.get_rect()
+# When update timer reached (or very firat time) get data from server and reset firsttime to prevent further reads at this time
 
-        l1t1Rect.center = (tabx, datay+tabsp)
-        l1t2Rect.center = (tabx + tabinc, datay+tabsp)
-        l1t3Rect.center = (tabx+ 2*tabinc, datay+tabsp)
+    if (int(retrievesec) + delta) % updatesec == 0 and firsttime > 0 or tout < 0:
 
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
-        we.blit(l13, l1t3Rect)
-        we.blit(h21, h2t1Rect)
-        we.blit(h22, h2t2Rect)
-        we.blit(h23, h2t3Rect)
+        try:
+            x = requests.get(weatherURL, timeout = timout)
+            if x.status_code == 200:
+                weather = x.json()
+                tout = 0         # clear timeout timeout flag
+        except requests.ConnectionError as e:
+            ecode = "Con"
+            errtot = errtot + 1
+            if debug:  # Log to file
+                print(time.strftime("%H:%M:%S",time.localtime(time.time()))+" "+ str(x.status_code) + " " + str(e))
+            continue
+        except requests.Timeout as e:
+            ecode = "TO"
+            tout = -1             # set timeout flag so GET is tried at next attempt
+            errtot = errtot + 1
+            if debug:  # Log to file
+                print(time.strftime("%H:%M:%S",time.localtime(time.time()))+" "+ str(x.status_code) + " " + str(e))
+            continue
+        firsttime = 0           # reset firsttime indicator
 
-        # Line 3 (Wind)
-
-        l1t1 =  weather["wlatest"]
-        l1t2 =  weather["wgust"]
-        l1t3 =  weather["currentwdir"]
-
-        l11 = weafont.render(l1t1, True, weacolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-        l13 = weafont.render(l1t3, True, weacolour)
-
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-        l1t3Rect = l13.get_rect()
-
-        l1t1Rect.center = (tabx, datay+2*tabsp)
-        l1t2Rect.center = (tabx + tabinc, datay+2*tabsp)
-        l1t3Rect.center = (tabx+ 2*tabinc, datay+2*tabsp)
-
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
-        we.blit(l13, l1t3Rect)
-        we.blit(h31, h3t1Rect)
-        we.blit(h32, h3t2Rect)
-        we.blit(h33, h3t3Rect)
-
-        # Line 4 (Rain)
-
-        l1t1 =  weather["rfall"]
-        l1t2 =  weather["rmonth"]
-        l1t3 =  weather["ryear"]
-
-        l11 = weafont.render(l1t1, True, weacolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-        l13 = weafont.render(l1t3, True, weacolour)
-
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-        l1t3Rect = l13.get_rect()
-
-        l1t1Rect.center = (tabx, datay+3*tabsp)
-        l1t2Rect.center = (tabx + tabinc, datay+3*tabsp)
-        l1t3Rect.center = (tabx+ 2*tabinc, datay+3*tabsp)
-
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
-        we.blit(l13, l1t3Rect)
-        we.blit(h41, h4t1Rect)
-        we.blit(h42, h4t2Rect)
-        we.blit(h43, h4t3Rect)
-
-        # Line 5 (Solar)
-
-        l1t1 =  weather["SolarRad"]
-        l1t2 =  weather["UV"]
-        l1t3 =  weather["SunshineHours"]
-
-        l11 = weafont.render(l1t1, True, weacolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-        l13 = weafont.render(l1t3, True, weacolour)
-
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-        l1t3Rect = l13.get_rect()
-
-        l1t1Rect.center = (tabx, datay+4*tabsp)
-        l1t2Rect.center = (tabx + tabinc, datay+4*tabsp)
-        l1t3Rect.center = (tabx+ 2*tabinc, datay+4*tabsp)
-
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
-        we.blit(l13, l1t3Rect)
-        we.blit(h51, h5t1Rect)
-        we.blit(h52, h5t2Rect)
-        we.blit(h53, h5t3Rect)
-
-        # Line 6 (Sunrise/set)
-
-        l1t1 =  weather["sunrise"]
-        l1t2 =  weather["sunset"]
-
-
-        l11 = weafont.render(l1t1, True, weacolour)
-        l12 = weafont.render(l1t2, True, weacolour)
-
-
-        l1t1Rect = l11.get_rect()
-        l1t2Rect = l12.get_rect()
-
-
-        l1t1Rect.center = (tabx, datay+5*tabsp)
-        l1t2Rect.center = (tabx + tabinc, datay+5*tabsp)
-
-
-        we.blit(l11, l1t1Rect)
-        we.blit(l12, l1t2Rect)
-        we.blit(h61, h6t1Rect)
-        we.blit(h62, h6t2Rect)
 
 # pause a bit then repeat!
 
