@@ -14,8 +14,8 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 
 # URL of your web server and the realtimeclock.txt file
 
-weatherURL = "https://your.web.server/yourrealtimeclock.txt"
-
+#weatherURL = "https://your.web.server/yourrealtimeclock.txt"
+weatherURL = "https://goosegate.uk/realtimeclock.txt"
 
 updatesec = int(15)
 timout = 1          #timeout value (secs) for GET requests
@@ -47,7 +47,8 @@ firsttime = int(1)  # Used to display weather data at first run
 tout = int(0)       # used if timeout error occurs
 ecode = str("---")         # request error code if defined
 errtot = int(0)     # Running count of errors
-
+deg_s = u"\N{Degree Sign}"
+sq_s =u"\N{Superscript Two}"
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
@@ -128,7 +129,7 @@ while tout < 0:
 
 # Generate Display table headings
 
-h1t1 =  "Temp" +" \u00B0" + weather["tempunit"]
+h1t1 =  "Temp " + deg_s + weather["tempunit"]
 h1t2 =  "High"
 h1t3 =  "Low"
 
@@ -197,7 +198,7 @@ h4t3Rect.center = (tabx+ 2*tabinc, taby+3*tabsp)
 
 # Line 5 Headings (Solar)
 
-h5t1 =  "Sun w/m"+"\u00B2"
+h5t1 =  "Sun w/m"+sq_s
 h5t2 =  "UVI"
 h5t3 =  "Sun Hours"
 
