@@ -14,8 +14,8 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 
 # URL of your web server and the realtimeclock.txt file
 
-weatherURL = "https://your.web.server/yourrealtimeclock.txt"
-
+#weatherURL = "https://your.web.server/yourrealtimeclock.txt"
+weatherURL = "https://goosegate.uk/realtimeclock.txt"
 
 updatesec = int(15)
 timout = 1          #timeout value (secs) for GET requests
@@ -48,8 +48,7 @@ tout = int(0)       # used if timeout error occurs
 ecode = str("---")         # request error code if defined
 errtot = int(0)     # Running count of errors
 deg_s = u"\N{Degree Sign}"
-sq_s =u"\N{Superscript Two}"
-
+sq_s = u"\N{Superscript Two}"
 
 # Scaling to the right size for the display
 digiclocksize  = int(bg.get_height()/5)
