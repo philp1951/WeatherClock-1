@@ -2,6 +2,7 @@
 "tempTL":"<#tempTL>",
 "tempTH":"<#tempTH>",
 "wlatest":"<#wlatest>",
+"hum":"<#hum>",
 "wgust":"<#wgust>",
 "currentwdir":"<#currentwdir>",
 "press":"<#press>",
@@ -20,5 +21,6 @@
 "SunshineHours":"<#SunshineHours>",
 "SolarRad":"<#SolarRad>",
 "sunrise":"<#sunrise>",
-"sunset":"<#sunset>"
+"sunset":"<#sunset>",
+"LightningStrikesToday":"<#LightningStrikesToday>"
 }

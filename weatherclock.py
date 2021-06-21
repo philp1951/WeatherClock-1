@@ -14,8 +14,8 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 
 # URL of your web server and the realtimeclock.txt file
 
-#weatherURL = "https://your.web.server/yourrealtimeclock.txt"
-weatherURL = "https://www.ecowitt.goosegate.uk/realtimeclock.txt"
+weatherURL = "https://your.web.server/yourrealtimeclock.txt"
+
 
 # Error file log
 
@@ -23,7 +23,7 @@ cerr = open("/home/pi/weatherclock/comerror.log","w+")
 
 updatesec = int(15)
 timout = 1          #timeout value (secs) for GET requests
-debug = True      # set True if you need to debug errors else set False
+debug = False      # set True if you need to debug errors else set False
 
 # If using debug = True then start the application with something like
 # python weatherclock.py >> error.log to gather connection error data
