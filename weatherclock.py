@@ -18,7 +18,7 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 # See the CumulusMX Wiki for more details
 # If your station doesn't have a solar sensor than edit as required
 
-weatherURL = "http://192.168.1.57:8998/api/tags/process.json?temp&tempTH&tempTL&tempunitnoenc&temptrend"
+weatherURL = "http://192.168.1.1:8998/api/tags/process.json?temp&tempTH&tempTL&tempunitnoenc&temptrend"
 weatherURL = weatherURL + "&press&pressTH&pressTL&pressunit&presstrendval"
 weatherURL = weatherURL + "&wlatest&wgust&currentwdir&windunit"
 weatherURL = weatherURL + "&rfall&rmonth&ryear&rainunit"
