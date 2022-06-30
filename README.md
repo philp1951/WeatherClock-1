@@ -48,12 +48,10 @@ Change into the directory where you copied weatherclock e.g. ..
 ```
 cd weatherclock
 ```
-By default the weather function is disabled. To enable this the following variables need to be set.
+The following variables need to be set.
 Take a copy of weatherclock.py and save it somewhere safe!
 ```
 1 - The variable weatherIP needs to be set to your CumulusMX IP address. (A prototype address 192.168.1.1:8998 is set as a template)
-2 - The variable wdisp needs to be set to  -1 [wdisp = int(-1)] to enable display of weather data.
-3 - The variable cmx needs to be set to 1 to enable display switching between Weather data and calendar data
 ```
 Running weatherclock
 --------------------
