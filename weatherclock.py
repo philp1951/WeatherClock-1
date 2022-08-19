@@ -18,15 +18,16 @@ pygame.mouse.set_visible(False) #Set true if you need to use mouse (shouldn't be
 # See the CumulusMX Wiki for more details
 # If your station doesn't have a solar sensor than edit as required
 
-weatherURL = "http://192.168.1.1:8998/api/tags/process.json?temp&tempTH&tempTL&tempunitnoenc&temptrend"
+weatherURL = "http://192.168.1.57:8998/api/tags/process.json?temp&tempTH&tempTL&tempunitnoenc&temptrend"
 weatherURL = weatherURL + "&press&pressTH&pressTL&pressunit&presstrendval"
 weatherURL = weatherURL + "&wlatest&wgust&currentwdir&windunit"
 weatherURL = weatherURL + "&rfall&rmonth&ryear&rainunit"
-weatherURL = weatherURL + "&SolarRad&UV&SunshineHours&sunrise&sunset"
+weatherURL = weatherURL + "&SolarRad&UV&SunshineHours&sunrise&sunset&LightningStrikesToday"
 
 weather = "Initial"     # define as a global
+retrievesec = "0"	# define as global
 
-updatesec = int(20)  # usuall set to your CMX realtime update time (seconds)
+updatesec = int(20)  # set to your CMX realtime update time (seconds)
 timout = 1          #timeout value (secs) for GET requests
 debug = False      # set True if you need to debug errors
 
@@ -92,12 +93,14 @@ txthmy         = int(ycentre-digiclockspace)
 txtsecy        = int(ycentre+digiclockspace)
 txtday         = int(ycentre-(2.5*digiclockspace))
 txtmon         = int(ycentre+(2.5*digiclockspace))
+statusmon      = int(yheight-20)        #for status and error count
 
 # Fonts
 clockfont     = pygame.font.Font(None,digiclocksize)
 dayfont       = pygame.font.Font(None,int(digiclocksize/1.75))
 weafont        = pygame.font.SysFont('lucida', 48)
 tabfont        = pygame.font.SysFont('lucida', 32)
+statfont        = pygame.font.SysFont('lucida', 24)
 
 # Parametric Equations of a Circle to get the markers
 # 90 Degree offset to start at 0 seconds marker
@@ -126,11 +129,12 @@ while tout < 0:
 #    print(x.text)
     if x.status_code == 200:
         weather = json.loads(x.text)
-        ecode = "OK"
+        ecode = "FT"
         tout = 0         # clear timeout timeout flag
     else:
         tout = -1   # Try request later
         ecode = "N/C"
+        errtot = errtot + 1        # Increment the count of errors
         time.sleep(updatesec)       # wait for a period
 
 # OK Valid data now continue
@@ -227,7 +231,7 @@ h5t3Rect.center = (tabx+ 2*tabinc, taby+4*tabsp)
 
 h6t1 =  "Sunrise"
 h6t2 =  "Sunset"
-h6t3 =  "Status"
+h6t3 =  "Lightning"
 
 
 h61 = tabfont.render(h6t1, True, tabcolour)
@@ -243,9 +247,46 @@ h6t1Rect.center = (tabx, taby+5*tabsp)
 h6t2Rect.center = (tabx + tabinc, taby+5*tabsp)
 h6t3Rect.center = (tabx + 2*tabinc, taby+5*tabsp)
 
-# MAIN LOOP:  KEYBOARD "z" AND "x" TOGTHER WILL EXIT THE PROGRAM
+# MAIN LOOP:  KEYBOARD "z" AND "q" TOGTHER WILL EXIT THE PROGRAM
 
 while True :
+
+# pause a bit then repeat!
+
+    time.sleep(0.1)
+    pygame.time.Clock().tick(10)
+
+
+#Check for ending codes
+
+    for event in pygame.event.get() :
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        # Pressing z and q to exit
+        if event.type == KEYDOWN:
+            if event.key == K_z and K_q:
+                pygame.quit()
+                sys.exit()
+
+# Update weather info every realtime seconds
+
+    tout = -1			# ensure that one read is made! 
+    if int(retrievesec) % updatesec == 0:
+        while tout < 0: 
+            x = requests.get(weatherURL, timeout = timout)
+            x.encoding='utf-8-sig'
+            #print(x.text)
+            if x.status_code == 200:
+                weather = json.loads(x.text)
+                ecode = "OK"
+                tout = 0         # clear timeout timeout flag
+            else:
+                tout = -1   # Try request later
+                ecode = "N/C"
+                time.sleep(updatesec)       # wait for a period
+
+    firsttime = 0           # reset firsttime indicator
 
     bg.fill(bgcolour)  # redraw clock - start from scratch
 
@@ -282,21 +323,25 @@ while True :
     retrieveyr = time.strftime("%Y",time.localtime(time.time()))
     daydate = retrieveday + " " + retrievedate
     yrmon = retrievemon + " " + retrieveyr
+    stat = "Status: " + ecode  + "  " + str(errtot)
 
     digiclockhm = clockfont.render(retrievehm,True,timecolour)
     digiclocksec = clockfont.render(retrievesec,True,timecolour)
     digiclockday = dayfont.render(daydate,True,clockcolour)
     digiclockmon = dayfont.render(yrmon,True,clockcolour)
+    digiclockstat = statfont.render(stat,True,tabcolour)
 
     txtposhm      = digiclockhm.get_rect(centerx=xclockpos,centery=txthmy)
     txtpossec     = digiclocksec.get_rect(centerx=xclockpos,centery=txtsecy)
     txtposday     = digiclockday.get_rect(centerx=xclockpos,centery=txtday)
     txtposmon     = digiclockmon.get_rect(centerx=xclockpos,centery=txtmon)
+    txtposstat    = digiclockstat.get_rect(centerx=xclockpos+80,centery=statusmon)
 
     bg.blit(digiclockhm, txtposhm)
     bg.blit(digiclocksec, txtpossec)
     bg.blit(digiclockday, txtposday)
     bg.blit(digiclockmon, txtposmon)
+    bg.blit(digiclockstat, txtposstat)
 
 
     screen.blit(bg, (0, 0))
@@ -497,7 +542,7 @@ while True :
 
     l1t1 =  weather["sunrise"]
     l1t2 =  weather["sunset"]
-    lit3 =  ecode
+    lit3 =  weather["LightningStrikesToday"]
 
 
     l11 = weafont.render(l1t1, True, weacolour)
@@ -522,47 +567,3 @@ while True :
 
     pygame.display.update()
 
-# Update weather info every realtime seconds
-# Handle timeouts by retrying request in the next pass
-
-    if int(retrievesec) % updatesec > 0:
-        firsttime = 1      # reset first time to prevent multiple GETs at each update time
-
-# When update timer reached (or very firat time) get data from server and reset firsttime to prevent further reads at this time
-
-    if int(retrievesec) % updatesec == 0 and firsttime > 0 or tout < 0:
-        tout = -1
-        while tout < 0:
-            x = requests.get(weatherURL, timeout = timout)
-            x.encoding='utf-8-sig'
-            #print(x.text)
-            if x.status_code == 200:
-                weather = json.loads(x.text)
-                ecode = "OK"
-                tout = 0         # clear timeout timeout flag
-            else:
-                tout = -1   # Try request later
-                ecode = "N/C"
-                time.sleep(updatesec)       # wait for a period
-
-    # OK Valid data now continue
-
-    firsttime = 0           # reset firsttime indicator
-
-
-# pause a bit then repeat!
-
-    time.sleep(0.1)
-    pygame.time.Clock().tick(10)
-
-#Check for ending codes
-
-    for event in pygame.event.get() :
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
-        # Pressing z and q to exit
-        if event.type == KEYDOWN:
-            if event.key == K_z and K_q:
-                pygame.quit()
-                sys.exit()
