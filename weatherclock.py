@@ -135,9 +135,6 @@ while tout < 0:
         tout = -1   # Try request later
         ecode = "N/C"
         errtot = errtot + 1        # Increment the count of errors
-        time.sleep(updatesec)       # wait for a period
-
-# OK Valid data now continue
 
 # Generate Display table headings
 
@@ -271,9 +268,9 @@ while True :
 
 # Update weather info every realtime seconds
 
-    tout = -1			# ensure that one read is made! 
+    tout = -1			# ensure that one read is made!
     if int(retrievesec) % updatesec == 0:
-        while tout < 0: 
+        while tout < 0:
             x = requests.get(weatherURL, timeout = timout)
             x.encoding='utf-8-sig'
             #print(x.text)
@@ -566,4 +563,3 @@ while True :
     we.blit(h63, h6t3Rect)
 
     pygame.display.update()
-
