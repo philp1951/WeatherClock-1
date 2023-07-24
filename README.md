@@ -64,8 +64,6 @@ This MUST be run from the console on which it is to be displayed.
 
 To exit weatherflow press keys Z and X at the same time.
 
-weatherclock comes up in non-weather mode by default
-
 There is a crude way to auto-start it at boot - the usual cron based methods don't work out of the box and I need to work out how to set the correct enviroment for running.
 
 The 'crude' way is to include the following lines at the end of the .bashrc file in the user home directory.  It's a hidden file but should be there!
@@ -93,6 +91,8 @@ Other Operating Systems.
 ------------------
 
 I have successfully run this version with Python under Windows 11 on a 64 bit Intel system.  No support offered for this but you should be able to get it to work!
+
+It also runs successfully under UBUNTU 23.04 on 64bit Intel PC
 
 User configuration
 ------------------
