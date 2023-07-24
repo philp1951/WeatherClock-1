@@ -18,8 +18,10 @@ weatherclock is designed to be run on a Raspberry Pi with the Raspberry Pi 7" To
 
 Installation requirements for Raspberry Pi
 ------------------------------------------
+PLEASE NOTE:
+I have not tested this under 64bit Debian on a Raspberry Pi.  Some people have tried without success.  
 
-weatherclock is designed to run on Raspberry Pi under Debian 10 (Buster) / or Debian 11 (Bullseye) pygame and Python3. weatherclock requires Debian desktop (NOT the -lite variant)
+weatherclock is designed to run on Raspberry Pi under Debian 10 (Buster) / or Debian 11 (Bullseye) (32bit OS) with pygame and Python3. weatherclock requires Debian desktop (NOT the -lite variant)
 
 If you are unsure how to do this please see https://www.raspberrypi.org/software/raspberry-pi-desktop/  
 
