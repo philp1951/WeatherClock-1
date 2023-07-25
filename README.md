@@ -16,11 +16,8 @@ Hardware
 weatherclock is designed to be run on a Raspberry Pi with the Raspberry Pi 7" Touchscreen display.  It has also been tested on a 16:9 HDMI monitor
 
 
-Installation requirements for Raspberry Pi
+Installation requirements for Raspberry Pi  (32 bit Raspian)
 ------------------------------------------
-PLEASE NOTE:
-I have not tested this under 64bit Debian on a Raspberry Pi.  Some people have tried without success.  
-
 weatherclock is designed to run on Raspberry Pi under Debian 10 (Buster) / or Debian 11 (Bullseye) (32bit OS) with pygame and Python3. weatherclock requires Debian desktop (NOT the -lite variant)
 
 If you are unsure how to do this please see https://www.raspberrypi.org/software/raspberry-pi-desktop/  
@@ -73,15 +70,16 @@ The 'crude' way is to include the following lines at the end of the .bashrc file
 # start weatherclock if not already running
 {
 if ! ps -ax | grep python3 | grep weatherclock.py; then
-  sleep 5; /usr/bin/python3 /home/"username"/weatherclock/weatherclock.py
+  sleep 5; /usr/bin/python3 /home/"username"/weatherclock/monwclock.py
 fi
 } &> /dev/null
 ```
 
-N.B. the sleep 5 command above delays the start of the program.  Although the network should be up it appears that not all the required network connections are made
-by the time the application is run.
+N.B. the sleep 5 command above delays the start of the program.  Although the network should be up it appears that not all the required network connections are made by the time the application is run.
 
 This checks to see if python is running weatherclock.  If not - then start it. If it is do nothing - allowing multiple logins for user without generating errors.  
+
+The monwclock.py will start weatherclock.py and keep a check (once a minute) to ensure it is still running and attempt to restart weatherclock.py in the event of a crash.
 
 Using Weatherclock
 ------------------
@@ -89,8 +87,22 @@ Using Weatherclock
 Weatherclock comes up wth LHS displaying a 'studio' style clock and the RHS displays the following weather information: (T)emperature, (P)ressure, (W)ind speed and direction,
 (R)ainfall, Solar Power and (UV)index together with Sunrise and sunset times for the day.  The status of the link to the CumulusMX system is also displayed.
 
+Raspberry Pi 4 - 64 bit
+-----------------------
+
+weatherclock does work on the PI 4 - 64bit OS but with limitations...
+
+The system must be setup to boot to the desktop GUI.
+
+weatherclock should be started from a terminal screen with a command like /usr/bin/python3 /home/"username"/weatherclock/weatherclock.py. It will display in a separate window - not as neat as the stand-alone 32bit solution - but at least it works.  
+
+I HAVE NOT tried this on the 7inch LCD Touchscreen but it works on my 4k HDMI display.  The increased size of the window mat cause display issues on the 7inch Touchscreen.
+
+The addition to .bashrc documented above does not work reliably in this mode.  Playing around with the delay may prove successful!
+
+
 Other Operating Systems.
-------------------
+------------------------
 
 I have successfully run this version with Python under Windows 11 on a 64 bit Intel system.  No support offered for this but you should be able to get it to work!
 
