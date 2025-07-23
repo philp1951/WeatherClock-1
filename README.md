@@ -100,6 +100,10 @@ I HAVE NOT tried this on the 7inch LCD Touchscreen but it works on my 4k HDMI di
 
 The addition to .bashrc documented above does not work reliably in this mode.  Playing around with the delay may prove successful!
 
+Raspberry Pi 5 AND BOOKWORM
+---------------------------
+
+Weatherclock.py has been successfully tried under BOOKWORM on RPi5 using an X11 display session on ubuntu 25.04.  I have NOT tried it on PI5 or BOOKWORM with an attached official Raspberry Pi display.
 
 Other Operating Systems.
 ------------------------
