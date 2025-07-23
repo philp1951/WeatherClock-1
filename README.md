@@ -100,6 +100,11 @@ I HAVE NOT tried this on the 7inch LCD Touchscreen but it works on my 4k HDMI di
 
 The addition to .bashrc documented above does not work reliably in this mode.  Playing around with the delay may prove successful!
 
+Raspberry Pi 5 64 bit 
+---------------------
+
+Running under BOOKWORM (Debian 12) I have successfully run this and had a display running on an X11 display on UBUNBTU using ssh -X user@host.  
+I HAVE NOT tried this with an attached display - I don't see a reason for this NOT to work but YMMV !!
 
 Other Operating Systems.
 ------------------------
